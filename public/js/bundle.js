@@ -1,0 +1,1 @@
+console.error("Error: Cannot find module './gamepad.js/gamepad.js' from '/home/henrique/git/miniature-funicular/src'");
