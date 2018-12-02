@@ -13,8 +13,11 @@ const THREE = require('three')
 require('./three.js/controls/OrbitControls')(THREE)
 require('./three.js/loaders/FBXLoader')(THREE)
 
+import StdGravParams from './SIConstants'
+import SolarSystemDB from './SIConstants'
+
 // Renderer
-const renderer = new THREE.WebGLRenderer({ antialias: true })
+const renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true })
 renderer.setPixelRatio(window.devicePixelRatio)
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.shadowMap.enabled = true;
@@ -24,11 +27,11 @@ let cameraTarget = new THREE.Vector3(0, 0, 0)
 
 // Scene
 const scene = new THREE.Scene()
-scene.background = new THREE.Color(0xffffff);
+scene.background = new THREE.Color('white');
 // scene.fog = new THREE.Fog(0x000, 0, 100);
 
 // Camera
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 9000e5)
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1e-6)
 
 // Orbit Controls
 const orbitControls = new THREE.OrbitControls(camera, renderer.domElement)
@@ -38,7 +41,7 @@ orbitControls.mouseButtons = { ORBIT: THREE.MOUSE.LEFT, PAN: THREE.MOUSE.MIDDLE,
 orbitControls.screenSpacePanning = true
 orbitControls.zoomSpeed = 0.8
 
-camera.position.set(0, 400e6, 0)
+camera.position.set(0, 40, 0)
 camera.lookAt(cameraTarget)
 orbitControls.update()
 
@@ -53,7 +56,7 @@ function init() {
     scene.add(axis)
 
     // Grid Helper
-    const grid = new THREE.GridHelper(384402e3 * 2, 40)
+    const grid = new THREE.GridHelper(10, 40)
     grid.material.color.setHex(0x000000)
     grid.material.opacity = 0.1
     grid.material.transparent = true
@@ -78,17 +81,11 @@ function init() {
 
     scene.add(new THREE.CameraHelper(sun.shadow.camera));
 
-    addPlanets()
+    initSolarSystem()
 }
 
 const material_1 = new THREE.MeshLambertMaterial({ color: 0x118844 })
 const material_2 = new THREE.MeshLambertMaterial({ color: 0x333333 })
-
-/**
- * G is the gravitational constant (6.674×10−11 N · (m/kg)2).
- * https://en.wikipedia.org/wiki/Gravitational_constant
- */
-const G = 6.674e-11
 
 /**
  * Newton's law of universal gravitation
@@ -104,6 +101,28 @@ function universalGravitation(m1, m2, r) {
     return G * (m1 * m2) / (r * r)
 }
 
+class OrbitalSystem {
+
+    constructor(centralBody, centralBodyMu) {
+        this.centralBody = centralBody
+        this.centralBodyMu = centralBodyMu
+        this.orbitingSystems = []
+    }
+
+    addOrbitingSystem(system) {
+        this.orbitingSystems.push(system)
+    }
+
+    update() {
+        /* Update central body */
+        // to do
+
+        /* Update orbiting systems */
+        // for (let system of this.orbitingSystems) {}
+    }
+
+}
+
 class Planet {
 
     constructor(id, x, y, mass, radius, material = material_1) {
@@ -113,10 +132,12 @@ class Planet {
         this.vel = new THREE.Vector3(0, 0, 0)
 
         this.mass = mass
+        this.radius = radius
 
-        const geometry = new THREE.SphereGeometry(radius, 24, 18)
+        const geometry = new THREE.SphereGeometry(1, 24 * 2, 18 * 2)
         this.mesh = new THREE.Mesh(geometry, material)
-        this.mesh.castShadow = true;
+        // this.mesh.castShadow = true;
+        this.mesh.scale.multiplyScalar(this.radius);
         scene.add(this.mesh)
 
         this.updateVisual()
@@ -162,12 +183,13 @@ class Planet {
     }
 
     get info() {
-        return `Planet ${this.id}:\n` +
-            ` mass: ${this.mass} kg\n` +
-            `    F: ${this.F} N\n` +
-            `  pos: ${this.pos.toArray()}\n` + //.map(x => x.toFixed(4))
-            `  vel: ${this.vel.toArray()}\n` +
-            `  acc: ${this.acc.toArray()}`
+        return `Planet: ${this.id}:\n` +
+            `  mass: ${this.mass} M☉\n` +
+            `radius: ${this.radius} au\n`
+        // `    F: ${this.F} N\n` +
+        // `  pos: ${this.pos.toArray()}\n` + //.map(x => x.toFixed(4))
+        // `  vel: ${this.vel.toArray()}\n` +
+        // `  acc: ${this.acc.toArray()}`
     }
 
 }
@@ -175,19 +197,58 @@ class Planet {
 // This should print ~686 N.
 // console.log(universalGravitation(5.98e24, 70, 6.38e6))
 
-let planets = []
+// console.log(StdGravParams.Earth)
+console.log(SolarSystemDB)
 
-const earth = new Planet(0, 0, 0, 5.972e24, 6371e3)  // green
-const moon = new Planet(1, 384402e3, 0, 7.342e22, 1737.1e3, material_2) // grey
+/* Length */
 
-function addPlanets() {
-    moon.vel.setZ(1.022e3)
+/** Converts kilometres to astronomical units */
+function km_to_astronomical_units(length) { return length * 6.6845871226706e-9 }
 
-    planets.push(earth)
-    planets.push(moon)
+/** Converts astronomical units to kilometres */
+function astronomical_units_to_km(length) { return length * 149597870.691 }
 
-    computeGravitationalForces(planets)
-    for (let planet of planets) console.log(planet.info)
+/* Mass */
+
+/** Converts kilograms to solar masses */
+function kg_to_solar_masses(mass) { return mass * 5.02785431e-31 }
+
+/** Converts solar masses to kilograms */
+function solar_masses_to_kg(mass) { return mass * 1.9889200011446e+30 }
+
+/* - - - - - - - - - - - - - - - - */
+
+let universe = null
+let sun = null
+let earth = null
+let jupiter = null
+
+function createBodyFromJSON(data) {
+    return new Planet(data.name, 0, 0,
+        kg_to_solar_masses(data.mass),
+        km_to_astronomical_units(data.radius),
+        material_2)
+}
+
+function initSolarSystem() {
+    earth = createBodyFromJSON(SolarSystemDB.Earth)
+    let orbsys_earth = new OrbitalSystem(earth, StdGravParams.Earth)
+
+    jupiter = createBodyFromJSON(SolarSystemDB.Jupiter)
+    let orbsys_jupiter = new OrbitalSystem(jupiter, StdGravParams.Jupiter)
+
+    sun = createBodyFromJSON(SolarSystemDB.Sun)
+    let solar_system = new OrbitalSystem(sun, StdGravParams.Sun)
+    solar_system.addOrbitingSystem(orbsys_earth)
+
+    universe = solar_system
+
+    console.log(sun.info)
+    console.log(earth.info)
+    console.log(jupiter.info)
+
+    // computeGravitationalForces(planets)
+    // for (let planet of planets) console.log(planet.info)
 }
 
 function computeGravitationalForces(planets) {
@@ -203,9 +264,9 @@ function applyNextStates(planets) {
 }
 
 function updateWorld() {
-    computeGravitationalForces(planets)
-    computeNextStates(planets)
-    applyNextStates(planets)
+    // computeGravitationalForces(planets)
+    // computeNextStates(planets)
+    // applyNextStates(planets)
 
     // for (let planet of planets) console.log(planet.info)
 }
@@ -230,12 +291,23 @@ function onWindowResize() {
 window.addEventListener('keydown', function (event) {
     switch (event.keyCode) {
         case 48: // 0
-            camera.position.set(0, 400e6, 0)
+            camera.position.set(0, 40, 0)
             cameraTarget.set(0, 0, 0)
             orbitControls.update()
             break
         case 49: // 1
-            cameraTarget.copy(moon.pos)
+            camera.position.set(0, 4 * sun.radius, 0)
+            cameraTarget.copy(sun.pos)
+            orbitControls.update()
+            break
+        case 50: // 2
+            camera.position.set(0, 4 * earth.radius, 0)
+            cameraTarget.copy(earth.pos)
+            orbitControls.update()
+            break
+        case 53: // 5
+            camera.position.set(0, 4 * jupiter.radius, 0)
+            cameraTarget.copy(jupiter.pos)
             orbitControls.update()
             break
         case 65: // A
