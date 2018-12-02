@@ -55,6 +55,7 @@ const StdGravParams = {
 
 /**
  * Solar System Database
+ * https://en.wikipedia.org/wiki/List_of_Solar_System_objects_by_size
  * 
  *   name - string
  *   mass - kg

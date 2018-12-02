@@ -17,7 +17,7 @@ import StdGravParams from './SIConstants'
 import SolarSystemDB from './SIConstants'
 
 // Renderer
-const renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true })
+const renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: false })
 renderer.setPixelRatio(window.devicePixelRatio)
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.shadowMap.enabled = true;
@@ -45,6 +45,36 @@ camera.position.set(0, 40, 0)
 camera.lookAt(cameraTarget)
 orbitControls.update()
 
+const textureLoader = new THREE.TextureLoader();
+
+/**
+ * Textures from:
+ *  - https://www.solarsystemscope.com/textures/
+ *  - http://www.shadedrelief.com/natural3/index.html
+ */
+const earth_tex_color = textureLoader.load('./textures/earth/no-clouds-or-arctic-ocean-ice.jpg')
+const earth_tex_bump = textureLoader.load('./textures/earth/terrestrial-elevation.jpg')
+const earth_tex_spec = textureLoader.load('./textures/earth/land-water-mask.jpg')
+const earth_clouds_tex = textureLoader.load('./textures/earth/clouds-fair-weather.jpg')
+
+const skybox_tex = textureLoader.load('./textures/stars_milky_way.jpg')
+
+// const moon_tex_map = textureLoader.load('./textures/moon/moonmap4k.jpg')
+// const moon_tex_bump = textureLoader.load('./textures/moon/moonbump4k.jpg')
+
+const skybox = new THREE.Mesh(
+    new THREE.SphereGeometry(1e9),
+    new THREE.MeshPhongMaterial({
+        color: 'black',
+        emissive: 'white',
+        specular: 'black',
+        map: skybox_tex,
+        emissiveMap: skybox_tex,
+        side: THREE.BackSide,
+    }))
+
+scene.add(skybox)
+
 $(document).ready(function () {
     init()
     animate()
@@ -57,29 +87,26 @@ function init() {
 
     // Grid Helper
     const grid = new THREE.GridHelper(10, 40)
-    grid.material.color.setHex(0x000000)
-    grid.material.opacity = 0.1
+    grid.material.color.setHex(0xffffff)
+    grid.material.opacity = 0.4
     grid.material.transparent = true
     scene.add(grid)
 
 
     // Lights
 
-    let light = new THREE.HemisphereLight(0xffffff, 0x444444)
-
-    let sun = new THREE.DirectionalLight(0xffffff);
-    sun.position.set(0, 20, 10)
-    sun.castShadow = true;
-    sun.shadow.camera.top = 20;
-    sun.shadow.camera.bottom = -20;
-    sun.shadow.camera.left = -20;
-    sun.shadow.camera.right = 20;
-    sun.shadow.radius = 0.2;
+    let light = new THREE.PointLight('white', 1, 0, 2)
+    light.position.set(200, 0, 0)
+    // light.castShadow = true;
+    // light.shadow.camera.top = 20;
+    // light.shadow.camera.bottom = -20;
+    // light.shadow.camera.left = -20;
+    // light.shadow.camera.right = 20;
+    // light.shadow.radius = 0.2;
 
     scene.add(light)
-    scene.add(sun)
 
-    scene.add(new THREE.CameraHelper(sun.shadow.camera));
+    // scene.add(new THREE.CameraHelper(light.shadow.camera));
 
     initSolarSystem()
 }
@@ -134,11 +161,31 @@ class Planet {
         this.mass = mass
         this.radius = radius
 
-        const geometry = new THREE.SphereGeometry(1, 24 * 2, 18 * 2)
-        this.mesh = new THREE.Mesh(geometry, material)
+        this.mesh = new THREE.Mesh(
+            new THREE.SphereGeometry(1, 8 * 4, 6 * 4),
+            new THREE.MeshPhongMaterial({
+                color: 'white',
+                map: earth_tex_color,
+                bumpMap: earth_tex_bump,
+                bumpScale: 0.006 * this.radius,
+                specularMap: earth_tex_spec
+            }))
+
+        this.atmosphere = new THREE.Mesh(
+            new THREE.SphereGeometry(1, 8 * 4, 6 * 4),
+            new THREE.MeshPhongMaterial({
+                color: 'white',
+                map: earth_clouds_tex,
+                alphaMap: earth_clouds_tex,
+                transparent: true
+            }))
+
         // this.mesh.castShadow = true;
         this.mesh.scale.multiplyScalar(this.radius);
+        this.atmosphere.scale.multiplyScalar(1.004 * this.radius);
+
         scene.add(this.mesh)
+        scene.add(this.atmosphere)
 
         this.updateVisual()
     }
@@ -231,21 +278,21 @@ function createBodyFromJSON(data) {
 }
 
 function initSolarSystem() {
-    earth = createBodyFromJSON(SolarSystemDB.Earth)
-    let orbsys_earth = new OrbitalSystem(earth, StdGravParams.Earth)
+    // earth = createBodyFromJSON(SolarSystemDB.Earth)
+    // let orbsys_earth = new OrbitalSystem(earth, StdGravParams.Earth)
 
-    jupiter = createBodyFromJSON(SolarSystemDB.Jupiter)
-    let orbsys_jupiter = new OrbitalSystem(jupiter, StdGravParams.Jupiter)
+    // jupiter = createBodyFromJSON(SolarSystemDB.Jupiter)
+    // let orbsys_jupiter = new OrbitalSystem(jupiter, StdGravParams.Jupiter)
 
     sun = createBodyFromJSON(SolarSystemDB.Sun)
     let solar_system = new OrbitalSystem(sun, StdGravParams.Sun)
-    solar_system.addOrbitingSystem(orbsys_earth)
+    // solar_system.addOrbitingSystem(orbsys_earth)
 
     universe = solar_system
 
     console.log(sun.info)
-    console.log(earth.info)
-    console.log(jupiter.info)
+    // console.log(earth.info)
+    // console.log(jupiter.info)
 
     // computeGravitationalForces(planets)
     // for (let planet of planets) console.log(planet.info)
