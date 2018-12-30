@@ -13,22 +13,20 @@ const THREE = require('three')
 require('./three.js/controls/OrbitControls')(THREE)
 require('./three.js/loaders/FBXLoader')(THREE)
 
-import StdGravParams from './SIConstants'
+import Body from './Body'
 import SolarSystemDB from './SIConstants'
+import StdGravParams from './SIConstants'
+import * as Utils from './Utilities'
+import * as ws from './Workspace'
 
 // Renderer
-const renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: false })
+const renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true })
 renderer.setPixelRatio(window.devicePixelRatio)
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.shadowMap.enabled = true;
 $('#threejs-container').append(renderer.domElement)
 
 let cameraTarget = new THREE.Vector3(0, 0, 0)
-
-// Scene
-const scene = new THREE.Scene()
-scene.background = new THREE.Color('white');
-// scene.fog = new THREE.Fog(0x000, 0, 100);
 
 // Camera
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1e-6)
@@ -45,22 +43,7 @@ camera.position.set(0, 40, 0)
 camera.lookAt(cameraTarget)
 orbitControls.update()
 
-const textureLoader = new THREE.TextureLoader();
-
-/**
- * Textures from:
- *  - https://www.solarsystemscope.com/textures/
- *  - http://www.shadedrelief.com/natural3/index.html
- */
-const earth_tex_color = textureLoader.load('./textures/earth/no-clouds-or-arctic-ocean-ice.jpg')
-const earth_tex_bump = textureLoader.load('./textures/earth/terrestrial-elevation.jpg')
-const earth_tex_spec = textureLoader.load('./textures/earth/land-water-mask.jpg')
-const earth_clouds_tex = textureLoader.load('./textures/earth/clouds-fair-weather.jpg')
-
-const skybox_tex = textureLoader.load('./textures/stars_milky_way.jpg')
-
-// const moon_tex_map = textureLoader.load('./textures/moon/moonmap4k.jpg')
-// const moon_tex_bump = textureLoader.load('./textures/moon/moonbump4k.jpg')
+const skybox_tex = ws.textureLoader.load('./textures/stars_milky_way.jpg')
 
 const skybox = new THREE.Mesh(
     new THREE.SphereGeometry(1e9),
@@ -73,7 +56,7 @@ const skybox = new THREE.Mesh(
         side: THREE.BackSide,
     }))
 
-scene.add(skybox)
+ws.scene.add(skybox)
 
 $(document).ready(function () {
     init()
@@ -81,32 +64,12 @@ $(document).ready(function () {
 })
 
 function init() {
-    // Axes Helper
-    const axis = new THREE.AxesHelper(9371e3)
-    scene.add(axis)
-
     // Grid Helper
-    const grid = new THREE.GridHelper(10, 40)
-    grid.material.color.setHex(0xffffff)
-    grid.material.opacity = 0.4
-    grid.material.transparent = true
-    scene.add(grid)
-
-
-    // Lights
-
-    let light = new THREE.PointLight('white', 1, 0, 2)
-    light.position.set(200, 0, 0)
-    // light.castShadow = true;
-    // light.shadow.camera.top = 20;
-    // light.shadow.camera.bottom = -20;
-    // light.shadow.camera.left = -20;
-    // light.shadow.camera.right = 20;
-    // light.shadow.radius = 0.2;
-
-    scene.add(light)
-
-    // scene.add(new THREE.CameraHelper(light.shadow.camera));
+    // const grid = new THREE.GridHelper(10, 40)
+    // grid.material.color.setHex(0xffffff)
+    // grid.material.opacity = 0.4
+    // grid.material.transparent = true
+    // ws.scene.add(grid)
 
     initSolarSystem()
 }
@@ -150,172 +113,90 @@ class OrbitalSystem {
 
 }
 
-class Planet {
-
-    constructor(id, x, y, mass, radius, material = material_1) {
-        this.id = id
-
-        this.pos = new THREE.Vector3(x, 0, y)
-        this.vel = new THREE.Vector3(0, 0, 0)
-
-        this.mass = mass
-        this.radius = radius
-
-        this.mesh = new THREE.Mesh(
-            new THREE.SphereGeometry(1, 8 * 4, 6 * 4),
-            new THREE.MeshPhongMaterial({
-                color: 'white',
-                map: earth_tex_color,
-                bumpMap: earth_tex_bump,
-                bumpScale: 0.006 * this.radius,
-                specularMap: earth_tex_spec
-            }))
-
-        this.atmosphere = new THREE.Mesh(
-            new THREE.SphereGeometry(1, 8 * 4, 6 * 4),
-            new THREE.MeshPhongMaterial({
-                color: 'white',
-                map: earth_clouds_tex,
-                alphaMap: earth_clouds_tex,
-                transparent: true
-            }))
-
-        // this.mesh.castShadow = true;
-        this.mesh.scale.multiplyScalar(this.radius);
-        this.atmosphere.scale.multiplyScalar(1.004 * this.radius);
-
-        scene.add(this.mesh)
-        scene.add(this.atmosphere)
-
-        this.updateVisual()
-    }
-
-    computeGravitationalForce() {
-        this.acc = new THREE.Vector3(0, 0, 0)
-
-        for (let planet of planets) {
-            if (planet.id == this.id) continue
-
-            const distance = this.pos.distanceTo(planet.pos)
-            const F = universalGravitation(this.mass, planet.mass, distance)
-            this.F = F
-
-            /**
-             *  F = m * a
-             *  and therefore,
-             *  a = F / m
-             */
-
-            const a = F / this.mass
-
-            const acc_vector = new THREE.Vector3().subVectors(planet.pos, this.pos).normalize().multiplyScalar(a)
-            this.acc.add(acc_vector)
-        }
-    }
-
-    computeNextState() {
-        this.next_vel = new THREE.Vector3().addVectors(this.vel, this.acc)
-        this.next_pos = new THREE.Vector3().addVectors(this.pos, this.next_vel)
-    }
-
-    applyNextState() {
-        this.vel = this.next_vel
-        this.pos = this.next_pos
-
-        this.updateVisual()
-    }
-
-    updateVisual() {
-        this.mesh.position.copy(this.pos)
-    }
-
-    get info() {
-        return `Planet: ${this.id}:\n` +
-            `  mass: ${this.mass} M☉\n` +
-            `radius: ${this.radius} au\n`
-        // `    F: ${this.F} N\n` +
-        // `  pos: ${this.pos.toArray()}\n` + //.map(x => x.toFixed(4))
-        // `  vel: ${this.vel.toArray()}\n` +
-        // `  acc: ${this.acc.toArray()}`
-    }
-
-}
-
 // This should print ~686 N.
 // console.log(universalGravitation(5.98e24, 70, 6.38e6))
 
 // console.log(StdGravParams.Earth)
-console.log(SolarSystemDB)
-
-/* Length */
-
-/** Converts kilometres to astronomical units */
-function km_to_astronomical_units(length) { return length * 6.6845871226706e-9 }
-
-/** Converts astronomical units to kilometres */
-function astronomical_units_to_km(length) { return length * 149597870.691 }
-
-/* Mass */
-
-/** Converts kilograms to solar masses */
-function kg_to_solar_masses(mass) { return mass * 5.02785431e-31 }
-
-/** Converts solar masses to kilograms */
-function solar_masses_to_kg(mass) { return mass * 1.9889200011446e+30 }
+// console.log(SolarSystemDB)
 
 /* - - - - - - - - - - - - - - - - */
 
-let universe = null
-let sun = null
-let earth = null
-let jupiter = null
-
-function createBodyFromJSON(data) {
-    return new Planet(data.name, 0, 0,
-        kg_to_solar_masses(data.mass),
-        km_to_astronomical_units(data.radius),
-        material_2)
-}
-
 function initSolarSystem() {
-    // earth = createBodyFromJSON(SolarSystemDB.Earth)
-    // let orbsys_earth = new OrbitalSystem(earth, StdGravParams.Earth)
+    const mercury = new Body(SolarSystemDB.Mercury)
+    let orbsys_mercury = new OrbitalSystem(mercury, StdGravParams.Mercury)
 
-    // jupiter = createBodyFromJSON(SolarSystemDB.Jupiter)
-    // let orbsys_jupiter = new OrbitalSystem(jupiter, StdGravParams.Jupiter)
+    const venus = new Body(SolarSystemDB.Venus)
+    let orbsys_venus = new OrbitalSystem(venus, StdGravParams.Venus)
 
-    sun = createBodyFromJSON(SolarSystemDB.Sun)
+    const mars = new Body(SolarSystemDB.Mars)
+    let orbsys_mars = new OrbitalSystem(mars, StdGravParams.Mars)
+
+    const jupiter = new Body(SolarSystemDB.Jupiter)
+    let orbsys_jupiter = new OrbitalSystem(jupiter, StdGravParams.Jupiter)
+
+    const saturn = new Body(SolarSystemDB.Saturn)
+    let orbsys_saturn = new OrbitalSystem(saturn, StdGravParams.Saturn)
+
+    const uranus = new Body(SolarSystemDB.Uranus)
+    let orbsys_uranus = new OrbitalSystem(uranus, StdGravParams.Uranus)
+
+    const neptune = new Body(SolarSystemDB.Neptune)
+    let orbsys_neptune = new OrbitalSystem(neptune, StdGravParams.Neptune)
+
+    const pluto = new Body(SolarSystemDB.Pluto)
+    let orbsys_pluto = new OrbitalSystem(pluto, StdGravParams.Pluto)
+
+    /* Earth and Moon */
+
+    const moon = new Body(SolarSystemDB.Moon)
+    let orbsys_moon = new OrbitalSystem(moon, StdGravParams.Moon)
+
+    const earth = new Body(SolarSystemDB.Earth)
+    let orbsys_earth = new OrbitalSystem(earth, StdGravParams.Earth)
+    orbsys_earth.addOrbitingSystem(orbsys_moon)
+
+    /* Solar System */
+
+    const sun = new Body(SolarSystemDB.Sun)
     let solar_system = new OrbitalSystem(sun, StdGravParams.Sun)
-    // solar_system.addOrbitingSystem(orbsys_earth)
+    solar_system.addOrbitingSystem(orbsys_mercury)
+    solar_system.addOrbitingSystem(orbsys_venus)
+    solar_system.addOrbitingSystem(orbsys_earth)
+    solar_system.addOrbitingSystem(orbsys_mars)
+    solar_system.addOrbitingSystem(orbsys_jupiter)
+    solar_system.addOrbitingSystem(orbsys_saturn)
+    solar_system.addOrbitingSystem(orbsys_uranus)
+    solar_system.addOrbitingSystem(orbsys_neptune)
 
-    universe = solar_system
-
-    console.log(sun.info)
-    // console.log(earth.info)
-    // console.log(jupiter.info)
+    // for (const i in ws.body_map) console.log(ws.body_map[i].info)
 
     // computeGravitationalForces(planets)
     // for (let planet of planets) console.log(planet.info)
 }
 
-function computeGravitationalForces(planets) {
-    for (let planet of planets) planet.computeGravitationalForce()
+function computeGravitationalForces() {
+    for (const key in ws.body_map) ws.body_map[key].computeGravitationalForce()
 }
 
-function computeNextStates(planets) {
-    for (let planet of planets) planet.computeNextState()
+function computeNextStates() {
+    for (const key in ws.body_map) ws.body_map[key].computeNextState()
 }
 
-function applyNextStates(planets) {
-    for (let planet of planets) planet.applyNextState()
+function applyNextStates() {
+    for (const key in ws.body_map) ws.body_map[key].applyNextState()
 }
 
 function updateWorld() {
-    // computeGravitationalForces(planets)
-    // computeNextStates(planets)
-    // applyNextStates(planets)
+    ws.delta = ws.clock.getDelta()
 
-    // for (let planet of planets) console.log(planet.info)
+    // computeGravitationalForces()
+    computeNextStates()
+    applyNextStates()
+
+    // console.log(ws.delta)
+    // console.log(ws.body_map['earth'].info)
+
+    // for (const key of ws.body_map) ws.body_map[key].log(planet.info)
 }
 
 function animate() {
@@ -323,7 +204,7 @@ function animate() {
 
     updateWorld()
 
-    renderer.render(scene, camera)
+    renderer.render(ws.scene, camera)
     stats.update()
 }
 
@@ -335,27 +216,45 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight)
 }
 
+function teleportTo(bodyName) {
+    camera.position.copy(ws.body_map[bodyName].pos)
+    camera.position.x += 4 * ws.body_map[bodyName].radius
+    cameraTarget.copy(ws.body_map[bodyName].pos)
+    orbitControls.update()
+}
+
 window.addEventListener('keydown', function (event) {
     switch (event.keyCode) {
         case 48: // 0
-            camera.position.set(0, 40, 0)
-            cameraTarget.set(0, 0, 0)
-            orbitControls.update()
+            teleportTo('sun')
             break
         case 49: // 1
-            camera.position.set(0, 4 * sun.radius, 0)
-            cameraTarget.copy(sun.pos)
-            orbitControls.update()
+            teleportTo('mercury')
             break
         case 50: // 2
-            camera.position.set(0, 4 * earth.radius, 0)
-            cameraTarget.copy(earth.pos)
-            orbitControls.update()
+            teleportTo('venus')
+            break
+        case 51: // 3
+            teleportTo('earth')
+            break
+        case 52: // 4
+            teleportTo('mars')
+            // teleportTo('moon')
             break
         case 53: // 5
-            camera.position.set(0, 4 * jupiter.radius, 0)
-            cameraTarget.copy(jupiter.pos)
-            orbitControls.update()
+            teleportTo('jupiter')
+            break
+        case 54: // 6
+            teleportTo('saturn')
+            break
+        case 55: // 7
+            teleportTo('uranus')
+            break
+        case 56: // 8
+            teleportTo('neptune')
+            break
+        case 57: // 9
+            teleportTo('pluto')
             break
         case 65: // A
             break
