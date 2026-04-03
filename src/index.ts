@@ -5,6 +5,7 @@ import Stats from 'stats.js'
 import Body from './Body'
 import { SolarSystemDB } from './SIConstants'
 import { computeEphemerisForDate } from './Ephemeris'
+import { Minimap } from './Minimap'
 import * as ws from './Workspace'
 
 // WebGL check
@@ -70,6 +71,7 @@ for (const key in SolarSystemDB) {
 }
 
 initSolarSystem()
+const minimap = new Minimap(camera)
 animate()
 
 function initSolarSystem(): void {
@@ -99,6 +101,7 @@ function animate(): void {
     updateWorld()
 
     renderer.render(ws.scene, camera)
+    minimap.update(ws.delta)
     stats.update()
 }
 
