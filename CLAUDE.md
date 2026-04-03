@@ -33,6 +33,16 @@ Planet positions are computed client-side for the current date using Keplerian o
 
 **Accuracy:** ~arcminute for inner planets, sufficient for a visualisation where planets are rendered as spheres tens of pixels wide. Cross-validated against JPL Horizons reference data in `src/Ephemeris.test.ts`.
 
+## Roadmap
+
+- Date picker UI — let users scrub through time and see planets move to their historical/future positions
+- Orbital trails — draw each planet's orbital path as a faint ellipse
+- Planet labels / HUD — show planet names, distances, and current date on screen
+- Axial tilt and rotation — spin planets on their correct axes
+- More moons — add major moons of Jupiter, Saturn, etc.
+- Proper sRGB colour management — migrate textures to work correctly with modern Three.js colour pipeline
+- Fix physics integration — correct the Euler integrator and enable gravitational forces for real-time orbital motion
+
 ## Known Limitations
 
 - **Planets do not orbit in real-time.** Positions are computed once at page load for the current date. The physics simulation loop is disabled.
