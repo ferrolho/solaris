@@ -156,7 +156,7 @@ function applyNextStates() {
 }
 
 function updateWorld() {
-    ws.delta = ws.clock.getDelta()
+    ws.updateDelta()
 
     // computeGravitationalForces()
     computeNextStates()

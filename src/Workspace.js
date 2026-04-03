@@ -1,5 +1,3 @@
-/* THREE */
-
 import * as THREE from 'three'
 
 /** THREE Texture Loader */
@@ -7,11 +5,14 @@ export const textureLoader = new THREE.TextureLoader()
 
 /** THREE Scene */
 export const scene = new THREE.Scene()
-scene.background = new THREE.Color('white');
-// scene.fog = new THREE.Fog(0x000, 0, 100);
+scene.background = new THREE.Color('white')
 
-/* Dictionary of bodies in the universe */
-export let body_map = {}
+/** Dictionary of bodies in the universe */
+export const body_map = {}
 
 export const clock = new THREE.Clock()
 export let delta = clock.getDelta()
+
+export function updateDelta() {
+    delta = clock.getDelta()
+}
