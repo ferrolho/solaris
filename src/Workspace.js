@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { Timer } from 'three'
 
 /** THREE Texture Loader */
 export const textureLoader = new THREE.TextureLoader()
@@ -10,9 +11,10 @@ scene.background = new THREE.Color('black')
 /** Dictionary of bodies in the universe */
 export const body_map = {}
 
-export const clock = new THREE.Clock()
-export let delta = clock.getDelta()
+export const timer = new Timer()
+export let delta = 0
 
 export function updateDelta() {
-    delta = clock.getDelta()
+    timer.update()
+    delta = timer.getDelta()
 }
