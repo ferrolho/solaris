@@ -1,8 +1,6 @@
 const Detector = require('./three.js/Detector')
 if (!Detector.webgl) Detector.addGetWebGLMessage()
 
-const Gamepad = require('./gamepad.js/gamepad.js')
-const gamepad = new Gamepad()
 
 const Stats = require('stats.js')
 const stats = new Stats()
@@ -200,6 +198,7 @@ function updateWorld() {
 function animate() {
     requestAnimationFrame(animate)
 
+    pollGamepad()
     updateWorld()
 
     renderer.render(ws.scene, camera)
@@ -271,32 +270,29 @@ window.addEventListener('keydown', function (event) {
 
 
 /**
- * Gamepad-related stuff.
+ * Gamepad support (native Gamepad API)
  */
 
-/*
- * Connection / Disconnection
- */
-
-gamepad.on('connect', e => {
-    console.log(`Controller ${e.index} connected!`)
+window.addEventListener('gamepadconnected', e => {
+    console.log(`Controller ${e.gamepad.index} connected: ${e.gamepad.id}`)
 })
 
-gamepad.on('disconnect', e => {
-    console.log(`Controller ${e.index} disconnected!`)
+window.addEventListener('gamepaddisconnected', e => {
+    console.log(`Controller ${e.gamepad.index} disconnected: ${e.gamepad.id}`)
 })
 
-/*
- * Stick movements
- */
-
-gamepad.on('hold', 'stick_axis_left', e => {
-    // mesh.position.x += e.value[0] * 0.1
-    // mesh.position.z += e.value[1] * 0.1
-})
-
-gamepad.on('hold', 'stick_axis_right', e => {
-    orbitControls.rotateLeft(e.value[0] * 0.05)
-    orbitControls.rotateUp(e.value[1] * 0.03)
-    orbitControls.update()
-})
+function pollGamepad() {
+    const gamepads = navigator.getGamepads()
+    for (const gp of gamepads) {
+        if (!gp) continue
+        // Right stick: axes[2] (horizontal), axes[3] (vertical)
+        const deadzone = 0.15
+        const rx = Math.abs(gp.axes[2]) > deadzone ? gp.axes[2] : 0
+        const ry = Math.abs(gp.axes[3]) > deadzone ? gp.axes[3] : 0
+        if (rx || ry) {
+            orbitControls.rotateLeft(rx * 0.05)
+            orbitControls.rotateUp(ry * 0.03)
+            orbitControls.update()
+        }
+    }
+}
