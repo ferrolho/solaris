@@ -1,43 +1,17 @@
-// const SIConstants = {
-
-//     /**
-//      * G is the gravitational constant (6.674×10−11 N · (m/kg)2).
-//      * https://en.wikipedia.org/wiki/Gravitational_constant
-//      */
-//     G = 6.674e-11
-
-
-//     /**
-//      * https://en.wikipedia.org/wiki/Astronomical_system_of_units
-//      * 
-//      * All lengths are in AU (astronomical unit).
-//      * 1 km = 1 / 1.496e+8
-//      * 
-//      * All masses are in kg (kilogram).
-//      */
-
-//     const ua_earth_mass = 5.97237e24
-//     const ua_earth_radius = 4.2586898395721926e-05
-
-//     const ua_moon_mass = 7.342e22
-//     const ua_moon_radius = 1.1611631016042781e-05
-
-// }
-
 /**
- * Standard gravitational parameters, μ (m^3 s^−2).
- * 
+ * Standard gravitational parameters, mu (m^3 s^-2).
+ *
  * For several objects in the Solar System, the value of
- * μ is known to greater accuracy than either G or M.
- * 
+ * mu is known to greater accuracy than either G or M.
+ *
  * https://en.wikipedia.org/wiki/Standard_gravitational_parameter
- * 
+ *
  * Small body orbiting a central body: if the distance between
  * the bodies is r, the force exerted on the smaller body is:
- * 
- * F = (G M m) / (r * r) = (μ m) / (r * r)
+ *
+ * F = (G M m) / (r * r) = (mu m) / (r * r)
  */
-const StdGravParams = {
+export const StdGravParams = {
     'Sun': 1.32712440018e20,
     'Mercury': 2.2032e13,
     'Venus': 3.24859e14,
@@ -56,13 +30,13 @@ const StdGravParams = {
 /**
  * Solar System Database
  * https://en.wikipedia.org/wiki/List_of_Solar_System_objects_by_size
- * 
+ *
  *   name - string
  *   mass - kg
  * radius - km
  *   type - string
  */
-const SolarSystemDB = {
+export const SolarSystemDB = {
 
     Sun: {
         name: 'Sun',
@@ -300,14 +274,5 @@ const SolarSystemDB = {
             vz: -1.605291116469387E+00,
         },
     },
-
-}
-
-// browserify support
-if (typeof module === 'object') {
-
-    // module.exports = SIConstants;
-    module.exports = StdGravParams;
-    module.exports = SolarSystemDB;
 
 }

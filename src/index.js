@@ -1,27 +1,26 @@
-const Detector = require('./three.js/Detector')
-if (!Detector.webgl) Detector.addGetWebGLMessage()
+import * as THREE from 'three'
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import Stats from 'stats.js'
 
+import Body from './Body.js'
+import { SolarSystemDB, StdGravParams } from './SIConstants.js'
+import * as ws from './Workspace.js'
 
-const Stats = require('stats.js')
+// WebGL check
+if (!navigator.gpu && !document.createElement('canvas').getContext('webgl2')) {
+    document.body.innerText = 'WebGL is not supported in your browser.'
+}
+
+// Stats
 const stats = new Stats()
 stats.dom.id = 'statsjs'
 document.body.appendChild(stats.dom)
-
-const THREE = require('three')
-require('./three.js/controls/OrbitControls')(THREE)
-require('./three.js/loaders/FBXLoader')(THREE)
-
-import Body from './Body'
-import SolarSystemDB from './SIConstants'
-import StdGravParams from './SIConstants'
-import * as Utils from './Utilities'
-import * as ws from './Workspace'
 
 // Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true })
 renderer.setPixelRatio(window.devicePixelRatio)
 renderer.setSize(window.innerWidth, window.innerHeight)
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = true
 document.getElementById('threejs-container').appendChild(renderer.domElement)
 
 let cameraTarget = new THREE.Vector3(0, 0, 0)
@@ -30,10 +29,9 @@ let cameraTarget = new THREE.Vector3(0, 0, 0)
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1e-6)
 
 // Orbit Controls
-const orbitControls = new THREE.OrbitControls(camera, renderer.domElement)
+const orbitControls = new OrbitControls(camera, renderer.domElement)
 orbitControls.target = cameraTarget
-orbitControls.enableKeys = false
-orbitControls.mouseButtons = { ORBIT: THREE.MOUSE.LEFT, PAN: THREE.MOUSE.MIDDLE, ZOOM: THREE.MOUSE.RIGHT }
+orbitControls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN }
 orbitControls.screenSpacePanning = true
 orbitControls.zoomSpeed = 0.8
 
@@ -56,31 +54,17 @@ const skybox = new THREE.Mesh(
 
 ws.scene.add(skybox)
 
-init()
+initSolarSystem()
 animate()
-
-function init() {
-    // Grid Helper
-    // const grid = new THREE.GridHelper(10, 40)
-    // grid.material.color.setHex(0xffffff)
-    // grid.material.opacity = 0.4
-    // grid.material.transparent = true
-    // ws.scene.add(grid)
-
-    initSolarSystem()
-}
-
-const material_1 = new THREE.MeshLambertMaterial({ color: 0x118844 })
-const material_2 = new THREE.MeshLambertMaterial({ color: 0x333333 })
 
 /**
  * Newton's law of universal gravitation
  * https://en.wikipedia.org/wiki/Newton%27s_law_of_universal_gravitation
- * 
+ *
  * @param m1 is the first mass
  * @param m2 is the second mass
  * @param r  is the distance between the centers of the masses
- * 
+ *
  * @returns F is the force between the masses
  */
 function universalGravitation(m1, m2, r) {
@@ -108,12 +92,6 @@ class OrbitalSystem {
     }
 
 }
-
-// This should print ~686 N.
-// console.log(universalGravitation(5.98e24, 70, 6.38e6))
-
-// console.log(StdGravParams.Earth)
-// console.log(SolarSystemDB)
 
 /* - - - - - - - - - - - - - - - - */
 
@@ -163,11 +141,6 @@ function initSolarSystem() {
     solar_system.addOrbitingSystem(orbsys_saturn)
     solar_system.addOrbitingSystem(orbsys_uranus)
     solar_system.addOrbitingSystem(orbsys_neptune)
-
-    // for (const i in ws.body_map) console.log(ws.body_map[i].info)
-
-    // computeGravitationalForces(planets)
-    // for (let planet of planets) console.log(planet.info)
 }
 
 function computeGravitationalForces() {
@@ -188,11 +161,6 @@ function updateWorld() {
     // computeGravitationalForces()
     computeNextStates()
     applyNextStates()
-
-    // console.log(ws.delta)
-    // console.log(ws.body_map['earth'].info)
-
-    // for (const key of ws.body_map) ws.body_map[key].log(planet.info)
 }
 
 function animate() {
@@ -221,53 +189,20 @@ function teleportTo(bodyName) {
 }
 
 window.addEventListener('keydown', function (event) {
-    switch (event.keyCode) {
-        case 48: // 0
-            teleportTo('sun')
-            break
-        case 49: // 1
-            teleportTo('mercury')
-            break
-        case 50: // 2
-            teleportTo('venus')
-            break
-        case 51: // 3
-            teleportTo('earth')
-            break
-        case 52: // 4
-            teleportTo('mars')
-            // teleportTo('moon')
-            break
-        case 53: // 5
-            teleportTo('jupiter')
-            break
-        case 54: // 6
-            teleportTo('saturn')
-            break
-        case 55: // 7
-            teleportTo('uranus')
-            break
-        case 56: // 8
-            teleportTo('neptune')
-            break
-        case 57: // 9
-            teleportTo('pluto')
-            break
-        case 65: // A
-            break
-        case 68: // D
-            updateWorld()
-            break
-        case 83: // S
-            break
-        case 87: // W
-            break
-        default:
-            console.log('Pressed key code: ' + event.keyCode)
-            break
+    switch (event.key) {
+        case '0': teleportTo('sun'); break
+        case '1': teleportTo('mercury'); break
+        case '2': teleportTo('venus'); break
+        case '3': teleportTo('earth'); break
+        case '4': teleportTo('mars'); break
+        case '5': teleportTo('jupiter'); break
+        case '6': teleportTo('saturn'); break
+        case '7': teleportTo('uranus'); break
+        case '8': teleportTo('neptune'); break
+        case '9': teleportTo('pluto'); break
+        case 'd': case 'D': updateWorld(); break
     }
 })
-
 
 /**
  * Gamepad support (native Gamepad API)

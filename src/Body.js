@@ -1,6 +1,6 @@
 import * as THREE from 'three'
-import * as Utils from './Utilities'
-import * as ws from './Workspace'
+import * as Utils from './Utilities.js'
+import * as ws from './Workspace.js'
 
 class Body {
 
@@ -49,8 +49,7 @@ class Body {
             }
         }
 
-        // this.mesh.castShadow = true;
-        this.mesh.scale.multiplyScalar(this.radius);
+        this.mesh.scale.multiplyScalar(this.radius)
         ws.scene.add(this.mesh)
 
         if (data.atmosphere) {
@@ -65,7 +64,7 @@ class Body {
             this.atmosphere.material.alphaMap = tex_color
             this.atmosphere.material.transparent = true
 
-            this.atmosphere.scale.multiplyScalar(1.004 * this.radius);
+            this.atmosphere.scale.multiplyScalar(1.004 * this.radius)
             ws.scene.add(this.atmosphere)
         }
 
@@ -76,7 +75,7 @@ class Body {
             const phiSegments = 1
 
             this.rings = new THREE.Mesh(
-                new THREE.RingBufferGeometry(innerRadius, outerRadius, thetaSegments, phiSegments),
+                new THREE.RingGeometry(innerRadius, outerRadius, thetaSegments, phiSegments),
                 new THREE.MeshPhongMaterial({ side: THREE.DoubleSide, transparent: true }))
 
             this.rings.rotateX(0.6 * Math.PI)
@@ -84,34 +83,23 @@ class Body {
             let uvs = []
             for (let i = 0; i <= phiSegments; i++) {
                 for (let j = 0; j <= thetaSegments; j++) {
-                    uvs.push(i / phiSegments, j / thetaSegments);
+                    uvs.push(i / phiSegments, j / thetaSegments)
                 }
             }
 
-            this.rings.geometry.removeAttribute('uv')
-            this.rings.geometry.addAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
+            this.rings.geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
 
             const tex_color = ws.textureLoader.load(data.rings.tex_color)
 
             this.rings.material.map = tex_color
 
-            ws.scene.add(this.rings);
+            ws.scene.add(this.rings)
         }
 
         // Lights
         if (data.type == 'star') {
             this.light = new THREE.PointLight('white', 1, 0, 2)
-
-            // this.light.castShadow = true;
-            // this.light.shadow.camera.top = 20;
-            // this.light.shadow.camera.bottom = -20;
-            // this.light.shadow.camera.left = -20;
-            // this.light.shadow.camera.right = 20;
-            // this.light.shadow.radius = 0.2;
-
             ws.scene.add(this.light)
-
-            // ws.scene.add(new THREE.CameraHelper(this.light.shadow.camera));
         }
 
         this.updateVisual()
@@ -129,12 +117,6 @@ class Body {
             const distance = this.pos.distanceTo(planet.pos)
             const F = universalGravitation(this.mass, planet.mass, distance)
             this.F = F
-
-            /**
-             *  F = m * a
-             *  and therefore,
-             *  a = F / m
-             */
 
             const a = F / this.mass
 
@@ -162,7 +144,7 @@ class Body {
         if (this.atmosphere) {
             this.atmosphere.position.copy(this.pos)
 
-            const rotationSpeed = THREE.Math.degToRad(1e-4 * 360)
+            const rotationSpeed = THREE.MathUtils.degToRad(1e-4 * 360)
             this.atmosphere.rotateY(rotationSpeed * ws.delta)
         }
 
@@ -179,15 +161,8 @@ class Body {
             `radius: ${this.radius} au\n` +
             `  pos: ${this.pos.toArray().map(x => x.toFixed(4))} au\n` +
             `  vel: ${this.vel.toArray()}\n`
-        // `    F: ${this.F} N\n` +
-        // `  acc: ${this.acc.toArray()}`
     }
 
 }
 
-// browserify support
-if (typeof module === 'object') {
-
-    module.exports = Body;
-
-}
+export default Body
