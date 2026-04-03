@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import * as Utils from './Utilities.js'
 import * as ws from './Workspace.js'
+import { createSunMaterial, createCoronaMaterial } from './SunMaterial.js'
 
 class Body {
 
@@ -96,11 +97,15 @@ class Body {
             ws.scene.add(this.rings)
         }
 
-        // Stars: unlit self-illuminating material + point light
+        // Stars: animated shader material + corona + point light
         if (data.type == 'star') {
-            this.mesh.material = new THREE.MeshBasicMaterial({
-                color: 0xffcc44,
-            })
+            this.mesh.material = createSunMaterial()
+
+            this.corona = new THREE.Mesh(
+                new THREE.SphereGeometry(1, 8 * 4, 6 * 4),
+                createCoronaMaterial())
+            this.corona.scale.multiplyScalar(1.15 * this.radius)
+            ws.scene.add(this.corona)
 
             this.light = new THREE.PointLight('white', 3, 0, 0)
             ws.scene.add(this.light)
@@ -154,6 +159,14 @@ class Body {
 
         if (this.rings)
             this.rings.position.copy(this.pos)
+
+        if (this.corona) {
+            this.corona.position.copy(this.pos)
+            this.corona.material.uniforms.uTime.value = performance.now() * 0.001
+        }
+
+        if (this.mesh.material.isShaderMaterial)
+            this.mesh.material.uniforms.uTime.value = performance.now() * 0.001
 
         if (this.light)
             this.light.position.copy(this.pos)
