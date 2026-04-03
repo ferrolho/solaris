@@ -1,3 +1,37 @@
+export interface Ephemeris {
+    x: number; y: number; z: number
+    vx: number; vy: number; vz: number
+}
+
+export interface BodyVisuals {
+    tex_color?: string
+    tex_bump?: string
+    tex_spec?: string
+    tex_normal?: string
+}
+
+export interface BodyRings {
+    near: number
+    far: number
+    tex_color: string
+}
+
+export interface BodyAtmosphere {
+    tex_color: string
+}
+
+export interface BodyData {
+    name: string
+    mass: number
+    radius: number
+    std_grav_param: number
+    type: string
+    ephemeris: Ephemeris
+    visuals?: BodyVisuals
+    rings?: BodyRings
+    atmosphere?: BodyAtmosphere
+}
+
 /**
  * Standard gravitational parameters, mu (m^3 s^-2).
  *
@@ -11,7 +45,7 @@
  *
  * F = (G M m) / (r * r) = (mu m) / (r * r)
  */
-export const StdGravParams = {
+export const StdGravParams: Record<string, number> = {
     'Sun': 1.32712440018e20,
     'Mercury': 2.2032e13,
     'Venus': 3.24859e14,
@@ -36,7 +70,7 @@ export const StdGravParams = {
  * radius - km
  *   type - string
  */
-export const SolarSystemDB = {
+export const SolarSystemDB: Record<string, BodyData> = {
 
     Sun: {
         name: 'Sun',
