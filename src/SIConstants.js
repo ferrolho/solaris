@@ -74,8 +74,8 @@ export const SolarSystemDB = {
             vz: -4.761898618226503E+00,
         },
         visuals: {
-            tex_color: './textures/mercury/2k_mercury.jpg',
-            tex_bump: './textures/mercury/2k_mercury_bump.jpg',
+            tex_color: '/textures/mercury/2k_mercury.jpg',
+            tex_bump: '/textures/mercury/2k_mercury_bump.jpg',
         },
     },
 
@@ -94,8 +94,8 @@ export const SolarSystemDB = {
             vz: 1.089432846551251E+00
         },
         visuals: {
-            tex_color: './textures/venus/2k_venus_surface.jpg',
-            tex_bump: './textures/venus/2k_venus_surface_bump.jpg',
+            tex_color: '/textures/venus/2k_venus_surface.jpg',
+            tex_bump: '/textures/venus/2k_venus_surface_bump.jpg',
         },
     },
 
@@ -124,12 +124,12 @@ export const SolarSystemDB = {
              *  - https://www.solarsystemscope.com/textures/
              *  - http://www.shadedrelief.com/natural3/index.html
              */
-            tex_color: './textures/earth/no-clouds-or-arctic-ocean-ice.jpg',
-            tex_bump: './textures/earth/terrestrial-elevation.jpg',
-            tex_spec: './textures/earth/land-water-mask.jpg',
+            tex_color: '/textures/earth/no-clouds-or-arctic-ocean-ice.jpg',
+            tex_bump: '/textures/earth/terrestrial-elevation.jpg',
+            tex_spec: '/textures/earth/land-water-mask.jpg',
         },
         atmosphere: {
-            tex_color: './textures/earth/clouds-fair-weather.jpg',
+            tex_color: '/textures/earth/clouds-fair-weather.jpg',
         }
     },
 
@@ -153,8 +153,8 @@ export const SolarSystemDB = {
             vz: 4.459035856485372E-02,
         },
         visuals: {
-            tex_color: './textures/moon/moonmap.jpg',
-            tex_bump: './textures/moon/moonbump.jpg',
+            tex_color: '/textures/moon/moonmap.jpg',
+            tex_bump: '/textures/moon/moonbump.jpg',
         },
     },
 
@@ -173,8 +173,8 @@ export const SolarSystemDB = {
             vz: 7.914286108327682E-01,
         },
         visuals: {
-            tex_color: './textures/mars/2k_mars.jpg',
-            tex_bump: './textures/mars/2k_mars_bump.jpg',
+            tex_color: '/textures/mars/2k_mars.jpg',
+            tex_bump: '/textures/mars/2k_mars_bump.jpg',
         },
     },
 
@@ -193,7 +193,7 @@ export const SolarSystemDB = {
             vz: -2.447243767022833E-01,
         },
         visuals: {
-            tex_color: './textures/jupiter/2k_jupiter.jpg',
+            tex_color: '/textures/jupiter/2k_jupiter.jpg',
         },
     },
 
@@ -212,12 +212,12 @@ export const SolarSystemDB = {
             vz: -3.885338975003587E-01,
         },
         visuals: {
-            tex_color: './textures/saturn/2k_saturn.jpg',
+            tex_color: '/textures/saturn/2k_saturn.jpg',
         },
         rings: {
             near: 74658,
             far: 136775,
-            tex_color: './textures/saturn/2k_saturn_ring_alpha.png',
+            tex_color: '/textures/saturn/2k_saturn_ring_alpha.png',
         },
     },
 
@@ -236,7 +236,7 @@ export const SolarSystemDB = {
             vz: 6.680442269750042E-02,
         },
         visuals: {
-            tex_color: './textures/uranus/2k_uranus.jpg',
+            tex_color: '/textures/uranus/2k_uranus.jpg',
         },
     },
 
@@ -255,7 +255,7 @@ export const SolarSystemDB = {
             vz: -1.388478893539726E-01,
         },
         visuals: {
-            tex_color: './textures/neptune/2k_neptune.jpg',
+            tex_color: '/textures/neptune/2k_neptune.jpg',
         },
     },
 

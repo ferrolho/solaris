@@ -26,7 +26,7 @@ document.getElementById('threejs-container').appendChild(renderer.domElement)
 let cameraTarget = new THREE.Vector3(0, 0, 0)
 
 // Camera
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1e-6)
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1e-6, 1e12)
 
 // Orbit Controls
 const orbitControls = new OrbitControls(camera, renderer.domElement)
@@ -39,7 +39,7 @@ camera.position.set(0, 40, 0)
 camera.lookAt(cameraTarget)
 orbitControls.update()
 
-const skybox_tex = ws.textureLoader.load('./textures/stars_milky_way.jpg')
+const skybox_tex = ws.textureLoader.load('/textures/stars_milky_way.jpg')
 
 const skybox = new THREE.Mesh(
     new THREE.SphereGeometry(1e9),

@@ -5,7 +5,7 @@ export const textureLoader = new THREE.TextureLoader()
 
 /** THREE Scene */
 export const scene = new THREE.Scene()
-scene.background = new THREE.Color('white')
+scene.background = new THREE.Color('black')
 
 /** Dictionary of bodies in the universe */
 export const body_map = {}
