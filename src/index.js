@@ -54,9 +54,6 @@ const skybox = new THREE.Mesh(
 
 ws.scene.add(skybox)
 
-initSolarSystem()
-animate()
-
 /**
  * Newton's law of universal gravitation
  * https://en.wikipedia.org/wiki/Newton%27s_law_of_universal_gravitation
@@ -94,6 +91,9 @@ class OrbitalSystem {
 }
 
 /* - - - - - - - - - - - - - - - - */
+
+initSolarSystem()
+animate()
 
 function initSolarSystem() {
     const mercury = new Body(SolarSystemDB.Mercury)
