@@ -4,6 +4,7 @@ import Stats from 'stats.js'
 
 import Body from './Body'
 import { SolarSystemDB } from './SIConstants'
+import { computeEphemerisForDate } from './Ephemeris'
 import * as ws from './Workspace'
 
 // WebGL check
@@ -59,6 +60,14 @@ const skybox = new THREE.Mesh(
 ws.scene.add(skybox)
 
 /* - - - - - - - - - - - - - - - - */
+
+// Compute real-time planet positions for the current date
+const ephemeris = computeEphemerisForDate(new Date())
+for (const key in SolarSystemDB) {
+    if (ephemeris[key]) {
+        SolarSystemDB[key].ephemeris = ephemeris[key]
+    }
+}
 
 initSolarSystem()
 animate()
