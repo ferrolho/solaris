@@ -110,32 +110,50 @@ void main() {
 
     vec3 pos = vPosition * 2.0;
 
-    // Animated turbulence
-    float t = uTime * 0.15;
+    // Animated turbulence — slow convective motion
+    float t = uTime * 0.08;
     float n1 = fbm(pos + vec3(t, 0.0, t * 0.7));
     float n2 = fbm(pos * 1.5 + vec3(0.0, t * 0.8, t));
     float turb = n1 * 0.6 + n2 * 0.4;
 
-    // Sunspot-like darker patches
-    float spots = smoothstep(0.1, 0.5, fbm(pos * 3.0 + vec3(t * 0.3)));
+    // Granulation — fine convection cells covering the surface
+    float granulation = fbm(pos * 10.0 + vec3(t * 0.3)) * 0.06;
 
-    // Color palette: deep orange core to bright yellow surface
-    vec3 darkOrange = vec3(0.8, 0.3, 0.0);
-    vec3 brightYellow = vec3(1.0, 0.85, 0.4);
-    vec3 hotWhite = vec3(1.0, 0.95, 0.8);
+    // Sunspots — sparse darker cooler regions with soft falloff
+    float spotNoise = fbm(pos * 2.0 + vec3(t * 0.05));
+    float spotNoise2 = fbm(pos * 3.5 + vec3(t * 0.08, 0.0, t * 0.03));
+
+    // Color palette: ~5778K blackbody (near-white with subtle warm tint)
+    vec3 warmWhite = vec3(1.0, 0.97, 0.92);
+    vec3 brightWhite = vec3(1.0, 0.99, 0.96);
+    vec3 coolRegion = vec3(0.95, 0.88, 0.75);
 
     float colorMix = turb * 0.5 + 0.5;
-    vec3 color = mix(darkOrange, brightYellow, colorMix);
-    color = mix(color, hotWhite, smoothstep(0.6, 0.9, colorMix) * 0.4);
+    vec3 color = mix(coolRegion, warmWhite, colorMix);
+    color = mix(color, brightWhite, smoothstep(0.55, 0.8, colorMix) * 0.6);
 
-    // Darken with spots
-    color *= mix(0.7, 1.0, spots);
+    // Apply granulation — subtle brightness variation
+    color *= 1.0 + granulation;
 
-    // Limb darkening - edges appear darker/redder
-    float rim = dot(vNormal, vec3(0.0, 0.0, 1.0));
-    float limb = smoothstep(0.0, 0.7, rim);
-    color *= mix(0.5, 1.0, limb);
-    color = mix(color * vec3(1.0, 0.6, 0.3), color, limb);
+    // Sunspots — umbra (dark core) with penumbra (soft gradient surround)
+    // Only activate where both noise layers are high (sparse spots)
+    vec3 umbraColor = vec3(0.3, 0.18, 0.08);
+    vec3 penumbraColor = vec3(0.65, 0.5, 0.3);
+    float penumbra = smoothstep(0.3, 0.45, spotNoise) * smoothstep(0.25, 0.4, spotNoise2);
+    float umbra = smoothstep(0.4, 0.5, spotNoise) * smoothstep(0.35, 0.45, spotNoise2);
+    color = mix(color, penumbraColor, penumbra * 0.6);
+    color = mix(color, umbraColor, umbra * 0.8);
+
+    // Limb darkening — physically accurate: centre-to-limb variation
+    // Real solar limb darkening follows I(theta) ~ 1 - u*(1 - cos(theta))
+    // with u ~ 0.6 for visible wavelengths
+    float cosTheta = dot(vNormal, vec3(0.0, 0.0, 1.0));
+    float limbDarkening = 1.0 - 0.6 * (1.0 - cosTheta);
+
+    // Limb reddening — edges shift warmer as we look through more atmosphere
+    vec3 limbColor = vec3(1.0, 0.85, 0.6);
+    color = mix(color * limbColor, color, smoothstep(0.0, 0.5, cosTheta));
+    color *= limbDarkening;
 
     gl_FragColor = vec4(color, 1.0);
 }
@@ -166,9 +184,10 @@ void main() {
     #include <logdepthbuf_fragment>
 
     float intensity = pow(0.65 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.0);
-    float flicker = 0.85 + 0.15 * sin(uTime * 2.0);
-    vec3 color = vec3(1.0, 0.6, 0.2) * intensity * flicker;
-    gl_FragColor = vec4(color, intensity * 0.8);
+    float flicker = 0.92 + 0.08 * sin(uTime * 1.5);
+    // Pearly white corona with subtle warm tint
+    vec3 color = vec3(1.0, 0.95, 0.88) * intensity * flicker;
+    gl_FragColor = vec4(color, intensity * 0.6);
 }
 `
 
