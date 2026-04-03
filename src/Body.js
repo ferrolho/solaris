@@ -96,8 +96,12 @@ class Body {
             ws.scene.add(this.rings)
         }
 
-        // Lights
+        // Stars: unlit self-illuminating material + point light
         if (data.type == 'star') {
+            this.mesh.material = new THREE.MeshBasicMaterial({
+                color: 0xffcc44,
+            })
+
             this.light = new THREE.PointLight('white', 3, 0, 0)
             ws.scene.add(this.light)
         }
