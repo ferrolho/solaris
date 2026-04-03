@@ -35,15 +35,14 @@ Planet positions are computed client-side for the current date using Keplerian o
 
 ## Roadmap
 
-- Date picker UI — let users scrub through time and see planets move to their historical/future positions
+- Time controls — simulation clock with adjustable time scale (e.g. 1M× to see orbits), recomputing positions via `computeEphemerisForDate()` each frame (<1ms, fits easily in the 16ms frame budget at 60 FPS). Date picker UI to jump to any date. This replaces the broken N-body physics loop — analytical Keplerian positions are more accurate and cheaper than forward simulation.
 - Orbital trails — draw each planet's orbital path as a faint ellipse
 - Planet labels / HUD — show planet names, distances, and current date on screen
 - Axial tilt and rotation — spin planets on their correct axes
 - More moons — add major moons of Jupiter, Saturn, etc.
 - Proper sRGB colour management — migrate textures to work correctly with modern Three.js colour pipeline
-- Fix physics integration — correct the Euler integrator and enable gravitational forces for real-time orbital motion
 
 ## Known Limitations
 
-- **Planets do not orbit in real-time.** Positions are computed once at page load for the current date. The physics simulation loop is disabled.
+- **Planets do not orbit in real-time.** Positions are computed once at page load for the current date. The planned approach is to recompute Keplerian positions each frame with an accelerated simulation clock (see Roadmap), not N-body simulation.
 - Legacy colour management is disabled (`THREE.ColorManagement.enabled = false`) to preserve the original visual appearance with the current textures.
