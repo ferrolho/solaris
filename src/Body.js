@@ -98,7 +98,7 @@ class Body {
 
         // Lights
         if (data.type == 'star') {
-            this.light = new THREE.PointLight('white', 1, 0, 2)
+            this.light = new THREE.PointLight('white', 3, 0, 0)
             ws.scene.add(this.light)
         }
 

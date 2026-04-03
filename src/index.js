@@ -16,8 +16,12 @@ const stats = new Stats()
 stats.dom.id = 'statsjs'
 document.body.appendChild(stats.dom)
 
+// Disable sRGB color management to match legacy Three.js rendering
+THREE.ColorManagement.enabled = false
+
 // Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true })
+renderer.outputColorSpace = THREE.LinearSRGBColorSpace
 renderer.setPixelRatio(window.devicePixelRatio)
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.shadowMap.enabled = true
