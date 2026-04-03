@@ -24,7 +24,7 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuff
 renderer.setPixelRatio(window.devicePixelRatio)
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.shadowMap.enabled = true;
-$('#threejs-container').append(renderer.domElement)
+document.getElementById('threejs-container').appendChild(renderer.domElement)
 
 let cameraTarget = new THREE.Vector3(0, 0, 0)
 
@@ -58,10 +58,8 @@ const skybox = new THREE.Mesh(
 
 ws.scene.add(skybox)
 
-$(document).ready(function () {
-    init()
-    animate()
-})
+init()
+animate()
 
 function init() {
     // Grid Helper
