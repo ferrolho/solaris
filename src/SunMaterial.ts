@@ -23,8 +23,10 @@ export function createCoronaMaterial() {
         vertexShader: coronaVertexShader,
         fragmentShader: coronaFragmentShader,
         transparent: true,
-        side: THREE.BackSide,
-        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide,
+        blending: THREE.CustomBlending,
+        blendSrc: THREE.OneFactor,
+        blendDst: THREE.OneMinusSrcAlphaFactor,
         depthWrite: false,
     })
 }

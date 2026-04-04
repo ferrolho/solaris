@@ -111,14 +111,14 @@ class Body {
             ws.scene.add(this.rings)
         }
 
-        // Stars: animated shader material + corona + point light
+        // Stars: single billboard renders photosphere + corona
         if (data.type == 'star') {
-            this.mesh.material = createSunMaterial()
+            this.mesh.visible = false
 
             this.corona = new THREE.Mesh(
-                new THREE.SphereGeometry(1, 8 * 4, 6 * 4),
+                new THREE.PlaneGeometry(1, 1),
                 createCoronaMaterial())
-            this.corona.scale.multiplyScalar(1.15 * this.radius)
+            this.corona.scale.multiplyScalar(6.0 * this.radius)
             ws.scene.add(this.corona)
 
             this.light = new THREE.PointLight('white', 3, 0, 0)
@@ -163,7 +163,7 @@ class Body {
             coronaMat.uniforms.uTime.value = performance.now() * 0.001
         }
 
-        if ((this.mesh.material as THREE.ShaderMaterial).isShaderMaterial) {
+        if (this.mesh.visible && (this.mesh.material as THREE.ShaderMaterial).isShaderMaterial) {
             const sunMat = this.mesh.material as THREE.ShaderMaterial
             sunMat.uniforms.uTime.value = performance.now() * 0.001
         }
