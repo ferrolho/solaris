@@ -91,9 +91,8 @@ void main() {
     if (dist > 1.0) discard;
 
     float sunR = 1.0 / 3.0;
-    // Anti-aliased sun edge (screen-space width)
-    float edge = fwidth(dist) * 1.5;
-    float diskMask = smoothstep(sunR + edge, sunR - edge, dist);
+    // Smooth transition zone slightly wider than a pixel for seamless blending
+    float diskMask = smoothstep(sunR + 0.01, sunR - 0.005, dist);
 
     // === Photosphere ===
     // Map 2D disk to sphere surface for 3D-looking noise
@@ -132,23 +131,22 @@ void main() {
     photoColor = mix(photoColor, penumbraColor, penumbra * 0.6);
     photoColor = mix(photoColor, umbraColor, umbra * 0.8);
 
-    // Limb darkening — I(θ) ≈ 1 − u(1 − cosθ), u ≈ 0.6
-    float limbDarkening = 1.0 - 0.6 * (1.0 - cosTheta);
-    vec3 limbTint = vec3(1.0, 0.85, 0.6);
-    photoColor = mix(photoColor * limbTint, photoColor, smoothstep(0.0, 0.5, cosTheta));
+    // Subtle limb darkening — reduced from physical u≈0.6 so the edge
+    // doesn't appear darker than the corona glow in this stylised rendering
+    float limbDarkening = 1.0 - 0.3 * (1.0 - cosTheta);
+    // Gentle warm tint only at the very edge
+    vec3 limbTint = vec3(1.0, 0.93, 0.82);
+    photoColor = mix(photoColor * limbTint, photoColor, smoothstep(0.0, 0.3, cosTheta));
     photoColor *= limbDarkening;
-
-    // Chromosphere — thin bright layer at the limb, bridges photosphere → corona
-    float edgeGlow = pow(1.0 - cosTheta, 6.0) * 0.5;
-    photoColor += vec3(1.0, 0.85, 0.55) * edgeGlow;
 
     // === Corona ===
     float coronaDist = max(dist - sunR, 0.0) / (1.0 - sunR);
-    float glow = exp(-3.5 * coronaDist);
+    float glow = exp(-5.0 * coronaDist);
     float flicker = 0.95 + 0.05 * sin(uTime * 1.3);
-    vec3 innerCorona = vec3(1.0, 0.85, 0.55);
-    vec3 outerCorona = vec3(1.0, 0.6, 0.2);
-    vec3 coronaColor = mix(innerCorona, outerCorona, coronaDist) * glow * flicker * 0.4;
+    vec3 innerCorona = vec3(1.0, 0.96, 0.88);
+    vec3 outerCorona = vec3(1.0, 0.75, 0.4);
+    // Brightness matches photosphere edge, then falls off quickly
+    vec3 coronaColor = mix(innerCorona, outerCorona, coronaDist) * glow * flicker * 0.55;
 
     // === Composite (premultiplied alpha) ===
     // Inside sun disk: opaque photosphere (alpha = 1)
