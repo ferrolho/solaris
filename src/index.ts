@@ -41,9 +41,7 @@ orbitControls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOL
 orbitControls.screenSpacePanning = true
 orbitControls.zoomSpeed = 0.8
 
-camera.position.set(0, 40, 0)
-camera.lookAt(cameraTarget)
-orbitControls.update()
+// Camera position is set after initSolarSystem() to start near Earth
 
 const skybox_tex = ws.textureLoader.load('/textures/stars_milky_way.jpg')
 
@@ -71,6 +69,7 @@ for (const key in SolarSystemDB) {
 }
 
 initSolarSystem()
+teleportTo('earth')
 const minimap = new Minimap(camera)
 animate()
 
