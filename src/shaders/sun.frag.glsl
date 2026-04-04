@@ -4,6 +4,7 @@
 uniform float uTime;
 varying vec2 vUv;
 varying vec3 vNormal;
+varying vec3 vViewPosition;
 varying vec3 vPosition;
 
 // Simplex-style noise
@@ -126,7 +127,8 @@ void main() {
     // Limb darkening — physically accurate: centre-to-limb variation
     // Real solar limb darkening follows I(theta) ~ 1 - u*(1 - cos(theta))
     // with u ~ 0.6 for visible wavelengths
-    float cosTheta = dot(vNormal, vec3(0.0, 0.0, 1.0));
+    vec3 viewDir = normalize(vViewPosition);
+    float cosTheta = dot(vNormal, viewDir);
     float limbDarkening = 1.0 - 0.6 * (1.0 - cosTheta);
 
     // Limb reddening — edges shift warmer as we look through more atmosphere
