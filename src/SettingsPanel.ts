@@ -39,6 +39,21 @@ export class SettingsPanel {
         btn.addEventListener('click', () => this.toggle())
         document.body.appendChild(btn)
 
+        // Hint label next to gear
+        const hint = document.createElement('div')
+        Object.assign(hint.style, {
+            position: 'fixed',
+            bottom: '20px',
+            right: '54px',
+            fontFamily: "'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace",
+            fontSize: '10px',
+            color: 'rgba(255, 255, 255, 0.3)',
+            pointerEvents: 'none',
+            zIndex: '200',
+        })
+        hint.textContent = '? for controls'
+        document.body.appendChild(hint)
+
         // Panel
         this.panel = document.createElement('div')
         Object.assign(this.panel.style, {
