@@ -40,7 +40,8 @@ Planet positions are computed client-side for the current date using Keplerian o
 - [ ] Minimap — schematic top-down orthographic view in a corner, with exaggerated planet sizes, orbital rings, and a camera position indicator ("you are here"). Rendered via a second viewport/camera pass.
 - [ ] Orbital trails — draw each planet's orbital path as a faint ellipse
 - [ ] Planet labels / HUD — show planet names, distances, and current date on screen
-- [ ] Axial tilt and rotation — spin planets on their correct axes
+- [x] Axial tilt and rotation — planets spin on correct axes with IAU rotation data, GMST-based Earth orientation, and UV handedness correction for accurate illumination
+- [x] Earth night lights — city lights texture blended onto the dark side via shader injection, with smooth terminator transition
 - [ ] More moons — add major moons of Jupiter, Saturn, etc.
 - [ ] Proper sRGB colour management — migrate textures to work correctly with modern Three.js colour pipeline
 
