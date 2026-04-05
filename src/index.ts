@@ -10,6 +10,9 @@ import { Minimap } from './Minimap'
 import { Ship } from './Ship'
 import { InputManager } from './InputManager'
 import { CameraController } from './CameraController'
+import { getIdentity } from './PlayerIdentity'
+import { NetworkClient } from './NetworkClient'
+import { SettingsPanel } from './SettingsPanel'
 import * as ws from './Workspace'
 
 // WebGL check
@@ -76,9 +79,17 @@ initSolarSystem()
     console.log(`[Earth] UTC: ${now.toISOString()} | sub-solar: lon=${lon.toFixed(1)}° lat=${lat.toFixed(1)}° | expected lon: ${expected.toFixed(1)}°`)
 }
 
+const { id: localId, username: localUsername } = getIdentity()
 const inputManager = new InputManager()
 const ship = new Ship(ws.scene, ws.body_map['earth'])
 const cameraCtrl = new CameraController(camera, orbitControls, ship)
+
+// @ts-expect-error Vite injects import.meta.env at build time
+const wsUrl: string = import.meta.env?.VITE_WS_URL ?? 'ws://localhost:8080'
+const network = new NetworkClient(wsUrl, localId, localUsername, ws.scene)
+network.connect()
+network.startSendLoop(ship)
+const _settings = new SettingsPanel(network)
 
 teleportTo('earth')
 const hud = new Hud(camera)
@@ -115,6 +126,7 @@ function animate(): void {
         ship.update(ws.delta, inputManager.keysDown)
     }
     cameraCtrl.update(ws.delta)
+    network.update(ws.delta)
 
     renderer.render(ws.scene, camera)
     hud.update()
