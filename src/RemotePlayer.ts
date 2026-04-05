@@ -25,11 +25,40 @@ export class RemotePlayer {
         this.id = id
         this.username = username
 
-        // Ship mesh — same shape as local but orange wireframe
-        const geo = new THREE.ConeGeometry(0.4, 1, 8)
-        geo.rotateX(Math.PI / 2)
-        const mat = new THREE.MeshBasicMaterial({ color: 0xff8800, wireframe: true })
-        this.mesh = new THREE.Mesh(geo, mat)
+        // Ship mesh — same shape as local but orange/amber tones
+        const hull = new THREE.MeshBasicMaterial({ color: 0xddaa55 })
+        const accent = new THREE.MeshBasicMaterial({ color: 0xff8800 })
+        const engine = new THREE.MeshBasicMaterial({ color: 0xff4422 })
+
+        const group = new THREE.Group()
+
+        const fuselage = new THREE.Mesh(
+            new THREE.ConeGeometry(0.25, 1.2, 6).rotateX(-Math.PI / 2),
+            hull,
+        )
+        fuselage.position.z = -0.1
+        group.add(fuselage)
+
+        const wingGeo = new THREE.BoxGeometry(0.8, 0.04, 0.4)
+        const leftWing = new THREE.Mesh(wingGeo, accent)
+        leftWing.position.set(-0.5, 0, 0.15)
+        leftWing.rotation.z = -0.15
+        group.add(leftWing)
+
+        const rightWing = new THREE.Mesh(wingGeo, accent)
+        rightWing.position.set(0.5, 0, 0.15)
+        rightWing.rotation.z = 0.15
+        group.add(rightWing)
+
+        const engineBlock = new THREE.Mesh(
+            new THREE.BoxGeometry(0.2, 0.15, 0.2),
+            engine,
+        )
+        engineBlock.position.z = 0.5
+        group.add(engineBlock)
+
+        this.mesh = new THREE.Mesh()
+        this.mesh.add(group)
         this.mesh.scale.setScalar(1e-5)
         scene.add(this.mesh)
 

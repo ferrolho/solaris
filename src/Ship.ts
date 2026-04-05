@@ -24,15 +24,46 @@ export class Ship {
     private currentThrust = 0
 
     constructor(scene: THREE.Scene, spawnNear: { pos: THREE.Vector3; radius: number }) {
-        // Cone pointing along -Z (forward matches Three.js camera convention)
-        const geo = new THREE.ConeGeometry(0.4, 1, 8)
-        geo.rotateX(-Math.PI / 2) // tip along -Z
+        // Build ship from solid primitives (no wireframe)
+        const hull = new THREE.MeshBasicMaterial({ color: 0x88bbee })
+        const accent = new THREE.MeshBasicMaterial({ color: 0x44aaff })
+        const engine = new THREE.MeshBasicMaterial({ color: 0xff6633 })
 
-        const mat = new THREE.MeshBasicMaterial({
-            color: 0x44aaff,
-            wireframe: true,
-        })
-        this.mesh = new THREE.Mesh(geo, mat)
+        const group = new THREE.Group()
+
+        // Fuselage — cone pointing -Z (forward)
+        const fuselage = new THREE.Mesh(
+            new THREE.ConeGeometry(0.25, 1.2, 6).rotateX(-Math.PI / 2),
+            hull,
+        )
+        fuselage.position.z = -0.1
+        group.add(fuselage)
+
+        // Left wing — flat box
+        const wingGeo = new THREE.BoxGeometry(0.8, 0.04, 0.4)
+        const leftWing = new THREE.Mesh(wingGeo, accent)
+        leftWing.position.set(-0.5, 0, 0.15)
+        leftWing.rotation.z = -0.15 // slight sweep
+        group.add(leftWing)
+
+        // Right wing
+        const rightWing = new THREE.Mesh(wingGeo, accent)
+        rightWing.position.set(0.5, 0, 0.15)
+        rightWing.rotation.z = 0.15
+        group.add(rightWing)
+
+        // Engine block — small box at the rear
+        const engineBlock = new THREE.Mesh(
+            new THREE.BoxGeometry(0.2, 0.15, 0.2),
+            engine,
+        )
+        engineBlock.position.z = 0.5
+        group.add(engineBlock)
+
+        // Use a dummy mesh as the root — Group doesn't extend Mesh,
+        // but we need .mesh to be a single Object3D for position/quaternion sync
+        this.mesh = new THREE.Mesh()
+        this.mesh.add(group)
         this.mesh.scale.setScalar(SHIP_SCALE)
 
         // Spawn near the reference body, offset along +Y
