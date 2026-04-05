@@ -4,12 +4,18 @@ import type { Ship } from './Ship'
 
 export type CameraMode = 'observer' | 'chase' | 'cockpit'
 
-const CHASE_OFFSET = new THREE.Vector3(0, 0.6, -2.0) // local space: above & behind
-const CHASE_LERP_RATE = 8 // per second
+const CHASE_OFFSET = new THREE.Vector3(0, 0.3, -1.0) // local space: above & behind (tight follow)
+const CHASE_LERP_RATE = 16 // per second — snappy tracking
 
 const _targetPos = new THREE.Vector3()
 const _offset = new THREE.Vector3()
 const _lookAt = new THREE.Vector3()
+
+const MODE_LABELS: Record<CameraMode, string> = {
+    observer: 'OBSERVER',
+    chase: 'CHASE',
+    cockpit: 'COCKPIT',
+}
 
 export class CameraController {
     mode: CameraMode = 'observer'
@@ -17,6 +23,7 @@ export class CameraController {
     private camera: THREE.PerspectiveCamera
     private orbitControls: OrbitControls
     private ship: Ship
+    private badgeEl: HTMLDivElement
 
     constructor(
         camera: THREE.PerspectiveCamera,
@@ -26,6 +33,28 @@ export class CameraController {
         this.camera = camera
         this.orbitControls = orbitControls
         this.ship = ship
+
+        // Camera mode badge — top-center of screen
+        this.badgeEl = document.createElement('div')
+        Object.assign(this.badgeEl.style, {
+            position: 'fixed',
+            top: '12px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            padding: '4px 12px',
+            background: 'rgba(0, 0, 0, 0.55)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '6px',
+            pointerEvents: 'none',
+            zIndex: '100',
+            fontFamily: "'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace",
+            fontSize: '9px',
+            letterSpacing: '2px',
+            color: 'rgba(120, 180, 255, 0.7)',
+        })
+        this.badgeEl.textContent = MODE_LABELS[this.mode]
+        document.body.appendChild(this.badgeEl)
     }
 
     cycleMode(): void {
@@ -57,6 +86,7 @@ export class CameraController {
         }
 
         if (prev !== mode) {
+            this.badgeEl.textContent = MODE_LABELS[mode]
             console.log(`[Camera] ${mode}`)
         }
     }
@@ -78,7 +108,7 @@ export class CameraController {
         this.camera.position.lerp(_targetPos, t)
 
         // Look at a point slightly ahead of the ship
-        this.ship.getForward(_lookAt).multiplyScalar(CHASE_OFFSET.z * -0.5)
+        this.ship.getForward(_lookAt).multiplyScalar(CHASE_OFFSET.z * -0.3)
         _lookAt.add(this.ship.position)
         this.camera.lookAt(_lookAt)
     }
