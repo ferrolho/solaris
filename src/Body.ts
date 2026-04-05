@@ -73,6 +73,30 @@ class Body {
             if (data.visuals.tex_normal) {
                 material.normalMap = ws.textureLoader.load(data.visuals.tex_normal)
             }
+
+            if (data.visuals.tex_emissive) {
+                const nightTex = ws.textureLoader.load(data.visuals.tex_emissive)
+                material.onBeforeCompile = (shader) => {
+                    shader.uniforms.nightMap = { value: nightTex }
+                    shader.fragmentShader = shader.fragmentShader.replace(
+                        '#include <common>',
+                        '#include <common>\nuniform sampler2D nightMap;'
+                    )
+                    // After all lighting, blend in city lights on the dark side.
+                    // outgoingLight is the final lit color before tone mapping.
+                    shader.fragmentShader = shader.fragmentShader.replace(
+                        'vec4 diffuseColor = vec4( diffuse, opacity );',
+                        'vec4 diffuseColor = vec4( diffuse, opacity );\nvec2 nightUv = vMapUv;'
+                    )
+                    shader.fragmentShader = shader.fragmentShader.replace(
+                        '#include <opaque_fragment>',
+                        `vec3 nightColor = texture2D(nightMap, nightUv).rgb;
+                        float dayIntensity = dot(outgoingLight, vec3(0.299, 0.587, 0.114));
+                        outgoingLight += nightColor * (1.0 - smoothstep(0.0, 0.05, dayIntensity));
+                        #include <opaque_fragment>`
+                    )
+                }
+            }
         }
 
         this.mesh.scale.multiplyScalar(this.radius)

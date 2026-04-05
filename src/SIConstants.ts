@@ -8,6 +8,7 @@ export interface BodyVisuals {
     tex_bump?: string
     tex_spec?: string
     tex_normal?: string
+    tex_emissive?: string
 }
 
 export interface BodyRings {
@@ -174,6 +175,7 @@ export const SolarSystemDB: Record<string, BodyData> = {
             tex_color: 'textures/earth/no-clouds-or-arctic-ocean-ice.jpg',
             tex_bump: 'textures/earth/terrestrial-elevation.jpg',
             tex_spec: 'textures/earth/land-water-mask.jpg',
+            tex_emissive: 'textures/earth/night.jpg',
         },
         atmosphere: {
             tex_color: 'textures/earth/clouds-fair-weather.jpg',
