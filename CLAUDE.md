@@ -45,6 +45,21 @@ Planet positions are computed client-side for the current date using Keplerian o
 - [ ] More moons — add major moons of Jupiter, Saturn, etc.
 - [ ] Proper sRGB colour management — migrate textures to work correctly with modern Three.js colour pipeline
 
+## UI Design Language
+
+All HUD and overlay elements must follow this consistent style:
+
+- **Background:** `rgba(0, 0, 0, 0.55)` with `backdrop-filter: blur(8px)`
+- **Border:** `1px solid rgba(255, 255, 255, 0.1)`, `border-radius: 6px`
+- **Font:** monospace stack — `'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace`
+- **Text color:** primary `rgba(255, 255, 255, 0.95)`, secondary `rgba(255, 255, 255, 0.55)`
+- **Accent color:** blue tint `rgba(120, 180, 255, ...)` — used for labels and subtle glow lines
+- **Labels:** 9px uppercase, 2px letter-spacing, accent color at 0.5 opacity
+- **Accent line:** 1px gradient along top edge (`transparent → rgba(120, 180, 255, 0.4) → transparent`)
+- **Layout:** `pointer-events: none`, `z-index: 100`, `position: fixed`
+
+Reference implementations: `src/Hud.ts`, `src/Minimap.ts`.
+
 ## Known Limitations
 
 - **Planets do not orbit in real-time.** Positions are computed once at page load for the current date. The planned approach is to recompute Keplerian positions each frame with an accelerated simulation clock (see Roadmap), not N-body simulation.

@@ -5,6 +5,7 @@ import Stats from 'stats.js'
 import Body from './Body'
 import { SolarSystemDB } from './SIConstants'
 import { computeEphemerisForDate } from './Ephemeris'
+import { Hud } from './Hud'
 import { Minimap } from './Minimap'
 import * as ws from './Workspace'
 
@@ -73,6 +74,7 @@ initSolarSystem()
 }
 
 teleportTo('earth')
+const hud = new Hud(camera)
 const minimap = new Minimap(camera)
 animate()
 
@@ -103,6 +105,7 @@ function animate(): void {
     updateWorld()
 
     renderer.render(ws.scene, camera)
+    hud.update()
     minimap.update(ws.delta)
     stats.update()
 }
