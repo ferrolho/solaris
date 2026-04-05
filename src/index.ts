@@ -10,6 +10,7 @@ import { Minimap } from './Minimap'
 import { Ship } from './Ship'
 import { InputManager } from './InputManager'
 import { CameraController } from './CameraController'
+import { CockpitHud } from './CockpitHud'
 import { getIdentity } from './PlayerIdentity'
 import { NetworkClient } from './NetworkClient'
 import { SettingsPanel } from './SettingsPanel'
@@ -93,6 +94,7 @@ const _settings = new SettingsPanel(network)
 
 teleportTo('earth')
 const hud = new Hud(camera)
+const cockpitHud = new CockpitHud(ship, cameraCtrl)
 const minimap = new Minimap(camera)
 animate()
 
@@ -130,6 +132,7 @@ function animate(): void {
 
     renderer.render(ws.scene, camera)
     hud.update()
+    cockpitHud.update()
     minimap.update(ws.delta)
     stats.update()
 }
