@@ -118,10 +118,15 @@ function onWindowResize(): void {
 function teleportTo(bodyName: string): void {
     const body = ws.body_map[bodyName]
     if (!body) return
-    // Place camera along the Sun→body line, looking at the body from the Sun's side
     const sun = ws.body_map['sun']
-    const dirFromSun = new THREE.Vector3().subVectors(body.pos, sun.pos).normalize()
-    camera.position.copy(body.pos).addScaledVector(dirFromSun, -4 * body.radius)
+    if (body === sun) {
+        // Sun: offset camera along an arbitrary axis
+        camera.position.copy(body.pos).add(new THREE.Vector3(0, 0, 4 * body.radius))
+    } else {
+        // Place camera along the Sun→body line, looking at the body from the Sun's side
+        const dirFromSun = new THREE.Vector3().subVectors(body.pos, sun.pos).normalize()
+        camera.position.copy(body.pos).addScaledVector(dirFromSun, -4 * body.radius)
+    }
     cameraTarget.copy(body.pos)
     orbitControls.update()
 }
