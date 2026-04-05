@@ -6,7 +6,6 @@ export type CameraMode = 'observer' | 'chase' | 'cockpit'
 
 // Chase cam offset in AU — behind (+Z) and above (+Y) the ship (ship faces -Z)
 const CHASE_OFFSET = new THREE.Vector3(0, 1.5e-5, 4e-5)
-const CHASE_LERP_RATE = 60 // per second — very snappy, near-instant tracking
 
 const _targetPos = new THREE.Vector3()
 const _offset = new THREE.Vector3()
@@ -103,12 +102,9 @@ export class CameraController {
         // observer mode: OrbitControls handles everything
     }
 
-    private updateChase(delta: number): void {
+    private updateChase(_delta: number): void {
         this.computeChaseTarget(_targetPos)
-
-        // Smooth follow
-        const t = 1 - Math.exp(-CHASE_LERP_RATE * delta)
-        this.camera.position.lerp(_targetPos, t)
+        this.camera.position.copy(_targetPos)
 
         // Align camera up with ship's local up so roll is visible
         this.ship.getUp(_shipUp)
