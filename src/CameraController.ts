@@ -75,6 +75,10 @@ export class CameraController {
             this.ship.mesh.visible = true
             this.camera.up.set(0, 1, 0) // reset to world up for OrbitControls
             this.orbitControls.target.copy(this.ship.position)
+            // Place camera at a visible distance behind the ship so OrbitControls has a sane radius
+            this.ship.getForward(_offset).multiplyScalar(-8e-5) // behind the ship
+            _offset.y += 4e-5                                   // slightly above
+            this.camera.position.copy(this.ship.position).add(_offset)
             this.orbitControls.enabled = true
             this.orbitControls.update()
         } else if (mode === 'chase') {
