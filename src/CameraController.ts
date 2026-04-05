@@ -4,7 +4,8 @@ import type { Ship } from './Ship'
 
 export type CameraMode = 'observer' | 'chase' | 'cockpit'
 
-const CHASE_OFFSET = new THREE.Vector3(0, 0.3, 1.0) // local space: above & behind ship (ship faces -Z)
+// Chase cam offset in AU — behind (+Z) and above (+Y) the ship (ship faces -Z)
+const CHASE_OFFSET = new THREE.Vector3(0, 1.5e-5, 4e-5)
 const CHASE_LERP_RATE = 16 // per second — snappy tracking
 
 const _targetPos = new THREE.Vector3()
@@ -78,7 +79,7 @@ export class CameraController {
             // Snap camera to chase position immediately on mode switch
             this.computeChaseTarget(_targetPos)
             this.camera.position.copy(_targetPos)
-            this.ship.getForward(_lookAt).multiplyScalar(2).add(this.ship.position)
+            this.ship.getForward(_lookAt).multiplyScalar(2e-5).add(this.ship.position)
             this.camera.lookAt(_lookAt)
         } else if (mode === 'cockpit') {
             this.ship.mesh.visible = false
@@ -108,7 +109,7 @@ export class CameraController {
         this.camera.position.lerp(_targetPos, t)
 
         // Look at a point slightly ahead of the ship
-        this.ship.getForward(_lookAt).multiplyScalar(CHASE_OFFSET.z * 0.3)
+        this.ship.getForward(_lookAt).multiplyScalar(2e-5)
         _lookAt.add(this.ship.position)
         this.camera.lookAt(_lookAt)
     }
@@ -119,10 +120,8 @@ export class CameraController {
     }
 
     private computeChaseTarget(out: THREE.Vector3): void {
-        // Offset in ship-local space, scaled by ship mesh size
-        const scale = this.ship.mesh.scale.x
-        _offset.copy(CHASE_OFFSET).multiplyScalar(scale)
-        _offset.applyQuaternion(this.ship.quaternion)
+        // Offset in ship-local space (AU), rotated to world space
+        _offset.copy(CHASE_OFFSET).applyQuaternion(this.ship.quaternion)
         out.copy(this.ship.position).add(_offset)
     }
 }
