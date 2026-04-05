@@ -14,6 +14,7 @@ import { CockpitHud } from './CockpitHud'
 import { getIdentity } from './PlayerIdentity'
 import { NetworkClient } from './NetworkClient'
 import { SettingsPanel } from './SettingsPanel'
+import { ShortcutsPanel } from './ShortcutsPanel'
 import * as ws from './Workspace'
 
 // WebGL check
@@ -91,6 +92,7 @@ const network = new NetworkClient(wsUrl, localId, localUsername, ws.scene)
 network.connect()
 network.startSendLoop(ship)
 const _settings = new SettingsPanel(network)
+const _shortcuts = new ShortcutsPanel()
 
 teleportTo('earth')
 const hud = new Hud(camera)
