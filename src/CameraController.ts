@@ -11,6 +11,7 @@ const CHASE_LERP_RATE = 16 // per second — snappy tracking
 const _targetPos = new THREE.Vector3()
 const _offset = new THREE.Vector3()
 const _lookAt = new THREE.Vector3()
+const _shipUp = new THREE.Vector3()
 
 const MODE_LABELS: Record<CameraMode, string> = {
     observer: 'OBSERVER',
@@ -70,6 +71,7 @@ export class CameraController {
 
         if (mode === 'observer') {
             this.ship.mesh.visible = true
+            this.camera.up.set(0, 1, 0) // reset to world up for OrbitControls
             this.orbitControls.target.copy(this.ship.position)
             this.orbitControls.enabled = true
             this.orbitControls.update()
@@ -107,6 +109,10 @@ export class CameraController {
         // Smooth follow
         const t = 1 - Math.exp(-CHASE_LERP_RATE * delta)
         this.camera.position.lerp(_targetPos, t)
+
+        // Align camera up with ship's local up so roll is visible
+        this.ship.getUp(_shipUp)
+        this.camera.up.copy(_shipUp)
 
         // Look at a point slightly ahead of the ship
         this.ship.getForward(_lookAt).multiplyScalar(2e-5)
