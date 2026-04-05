@@ -24,9 +24,9 @@ export class Ship {
     private currentThrust = 0
 
     constructor(scene: THREE.Scene, spawnNear: { pos: THREE.Vector3; radius: number }) {
-        // Cone pointing along +Z (forward)
+        // Cone pointing along -Z (forward matches Three.js camera convention)
         const geo = new THREE.ConeGeometry(0.4, 1, 8)
-        geo.rotateX(Math.PI / 2) // tip along +Z
+        geo.rotateX(-Math.PI / 2) // tip along -Z
 
         const mat = new THREE.MeshBasicMaterial({
             color: 0x44aaff,
@@ -58,7 +58,7 @@ export class Ship {
         if (pitch) this.rotateLocal(1, 0, 0, pitch * PITCH_RATE * delta)
         if (roll) this.rotateLocal(0, 0, 1, roll * ROLL_RATE * delta)
 
-        // Thrust along local forward (+Z)
+        // Thrust along local forward (-Z)
         const thrustFwd = ((keys.has('w') || keys.has('W')) ? 1 : 0) - ((keys.has('s') || keys.has('S')) ? 1 : 0)
         this.currentThrust = thrustFwd * THRUST * boost
 
@@ -89,7 +89,7 @@ export class Ship {
     }
 
     getForward(out: THREE.Vector3): THREE.Vector3 {
-        return out.set(0, 0, 1).applyQuaternion(this.quaternion)
+        return out.set(0, 0, -1).applyQuaternion(this.quaternion)
     }
 
     getRight(out: THREE.Vector3): THREE.Vector3 {

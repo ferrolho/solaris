@@ -4,7 +4,7 @@ import type { Ship } from './Ship'
 
 export type CameraMode = 'observer' | 'chase' | 'cockpit'
 
-const CHASE_OFFSET = new THREE.Vector3(0, 0.3, -1.0) // local space: above & behind (tight follow)
+const CHASE_OFFSET = new THREE.Vector3(0, 0.3, 1.0) // local space: above & behind ship (ship faces -Z)
 const CHASE_LERP_RATE = 16 // per second — snappy tracking
 
 const _targetPos = new THREE.Vector3()
@@ -108,7 +108,7 @@ export class CameraController {
         this.camera.position.lerp(_targetPos, t)
 
         // Look at a point slightly ahead of the ship
-        this.ship.getForward(_lookAt).multiplyScalar(CHASE_OFFSET.z * -0.3)
+        this.ship.getForward(_lookAt).multiplyScalar(CHASE_OFFSET.z * 0.3)
         _lookAt.add(this.ship.position)
         this.camera.lookAt(_lookAt)
     }
