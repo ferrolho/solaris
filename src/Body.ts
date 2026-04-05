@@ -1,8 +1,11 @@
 import * as THREE from 'three'
 import * as Utils from './Utilities'
 import * as ws from './Workspace'
-import { createSunMaterial, createCoronaMaterial } from './SunMaterial'
+import { createCoronaMaterial } from './SunMaterial'
+import { dateToJulianDate } from './Ephemeris'
 import type { BodyData } from './SIConstants'
+
+const UP = new THREE.Vector3(0, 1, 0)
 
 class Body {
     name: string
@@ -18,6 +21,13 @@ class Body {
     acc: THREE.Vector3
     next_vel: THREE.Vector3
     next_pos: THREE.Vector3
+
+    // Rotation state
+    spinAxis?: THREE.Vector3
+    tiltQuaternion?: THREE.Quaternion
+    rotationSpeed: number = 0   // radians per sim-second
+    spinAngle: number = 0       // current spin angle in radians
+    tidallyLocked?: string
 
     constructor(data: BodyData) {
         this.name = data.name
@@ -68,6 +78,52 @@ class Body {
         this.mesh.scale.multiplyScalar(this.radius)
         ws.scene.add(this.mesh)
 
+        // Axial tilt and rotation
+        if (data.rotation) {
+            const axis = Utils.northPoleToWorldAxis(data.rotation.northPoleRA, data.rotation.northPoleDec)
+            this.spinAxis = new THREE.Vector3(axis.x, axis.y, axis.z).normalize()
+            this.tiltQuaternion = new THREE.Quaternion().setFromUnitVectors(UP, this.spinAxis)
+
+            // radians per sim-second (period is in hours)
+            this.rotationSpeed = (2 * Math.PI) / (Math.abs(data.rotation.period) * 3600)
+            if (data.rotation.period < 0) this.rotationSpeed = -this.rotationSpeed
+
+            // Compute initial spin angle for the current date/time
+            const jd = dateToJulianDate(new Date())
+            let pmRA: number
+            if (this.name === 'Earth') {
+                pmRA = Utils.computeGMST(jd)
+            } else {
+                pmRA = Utils.computePrimeMeridianRA(
+                    data.rotation.northPoleRA, data.rotation.W0,
+                    data.rotation.period, jd)
+            }
+
+            // Illumination correction for Three.js UV handedness mismatch.
+            //
+            // Three.js SphereGeometry wraps textures such that, viewed from the
+            // north pole, longitude increases clockwise (+X → −Z). But the
+            // right-hand-rule quaternion rotates counterclockwise (+X → +Z).
+            // The texture-to-geometry mapping is correct (a pin at London's
+            // coordinates lands on London), but the spin rotation moves the
+            // illuminated face to the wrong longitude by an amount that depends
+            // on the Sun's ecliptic position relative to the body's tilt axis.
+            //
+            // The correction 2×C₀ compensates exactly for one point light (the
+            // Sun). If a second light source were added, it would need its own
+            // correction — or the geometry/UV convention would need to be fixed
+            // at the SphereGeometry level instead.
+            const sunDir = this.pos.clone().negate().normalize()  // Sun ≈ origin
+            const sunBody0 = sunDir.clone().applyQuaternion(this.tiltQuaternion.clone().invert())
+            const C0 = Math.atan2(-sunBody0.z, sunBody0.x) * 180 / Math.PI
+
+            this.spinAngle = (pmRA + 2 * C0) * Math.PI / 180
+
+            if (data.rotation.tidallyLocked) {
+                this.tidallyLocked = data.rotation.tidallyLocked.toLowerCase()
+            }
+        }
+
         if (data.atmosphere) {
             console.log(`Adding atmosphere visual fx to ${this.name}`)
             this.atmosphere = new THREE.Mesh(
@@ -85,8 +141,8 @@ class Body {
         }
 
         if (data.rings) {
-            const innerRadius = Utils.km_to_astronomical_units(data.rings.near)
-            const outerRadius = Utils.km_to_astronomical_units(data.rings.far)
+            const innerRadius = Utils.km_to_astronomical_units(data.rings.near) / this.radius
+            const outerRadius = Utils.km_to_astronomical_units(data.rings.far) / this.radius
             const thetaSegments = 100
             const phiSegments = 1
 
@@ -94,7 +150,8 @@ class Body {
                 new THREE.RingGeometry(innerRadius, outerRadius, thetaSegments, phiSegments),
                 new THREE.MeshPhongMaterial({ side: THREE.DoubleSide, transparent: true }))
 
-            this.rings.rotateX(0.6 * Math.PI)
+            // Ring lies in XY plane; rotate so its normal aligns with local +Y (pole)
+            this.rings.rotateX(Math.PI / 2)
 
             const uvs: number[] = []
             for (let i = 0; i <= phiSegments; i++) {
@@ -108,7 +165,8 @@ class Body {
             const tex_color = ws.textureLoader.load(data.rings.tex_color)
             this.rings.material.map = tex_color
 
-            ws.scene.add(this.rings)
+            // Parent rings to the mesh so they inherit tilt
+            this.mesh.add(this.rings)
         }
 
         // Stars: single billboard renders photosphere + corona
@@ -147,15 +205,39 @@ class Body {
     updateVisual(): void {
         this.mesh.position.copy(this.pos)
 
-        if (this.atmosphere) {
-            this.atmosphere.position.copy(this.pos)
-
-            const rotationSpeed = THREE.MathUtils.degToRad(1e-4 * 360)
-            this.atmosphere.rotateY(rotationSpeed * ws.delta)
+        // Rotation: tilt + spin
+        if (this.spinAxis && this.tiltQuaternion) {
+            if (this.tidallyLocked) {
+                // Orient so one face always points toward parent body
+                const parent = ws.body_map[this.tidallyLocked]
+                if (parent) {
+                    const toParent = new THREE.Vector3().subVectors(parent.pos, this.pos).normalize()
+                    // Project toParent onto equatorial plane (perpendicular to spin axis)
+                    const dot = toParent.dot(this.spinAxis)
+                    const forward = new THREE.Vector3().copy(toParent)
+                        .addScaledVector(this.spinAxis, -dot).normalize()
+                    const right = new THREE.Vector3().crossVectors(this.spinAxis, forward)
+                    // Build rotation matrix: local -Z faces parent (texture center),
+                    // local +Y is spin axis
+                    const m = new THREE.Matrix4().makeBasis(right, this.spinAxis, forward.negate())
+                    this.mesh.quaternion.setFromRotationMatrix(m)
+                }
+            } else {
+                this.spinAngle += this.rotationSpeed * ws.delta * ws.timeScale
+                const spinQuat = new THREE.Quaternion().setFromAxisAngle(this.spinAxis, this.spinAngle)
+                this.mesh.quaternion.copy(spinQuat).multiply(this.tiltQuaternion)
+            }
         }
 
-        if (this.rings)
-            this.rings.position.copy(this.pos)
+        if (this.atmosphere) {
+            this.atmosphere.position.copy(this.pos)
+            // Atmosphere shares the planet's tilt but drifts slightly slower
+            if (this.spinAxis && this.tiltQuaternion) {
+                const atmAngle = this.spinAngle * 0.95
+                const spinQuat = new THREE.Quaternion().setFromAxisAngle(this.spinAxis, atmAngle)
+                this.atmosphere.quaternion.copy(spinQuat).multiply(this.tiltQuaternion)
+            }
+        }
 
         if (this.corona) {
             this.corona.position.copy(this.pos)

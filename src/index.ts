@@ -43,7 +43,7 @@ orbitControls.zoomSpeed = 0.8
 
 // Camera position is set after initSolarSystem() to start near Earth
 
-const skybox_tex = ws.textureLoader.load('/textures/stars_milky_way.jpg')
+const skybox_tex = ws.textureLoader.load('textures/stars_milky_way.jpg')
 
 const skybox = new THREE.Mesh(
     new THREE.SphereGeometry(1e9),
@@ -69,6 +69,20 @@ for (const key in SolarSystemDB) {
 }
 
 initSolarSystem()
+
+{
+    const sun = ws.body_map['sun'], earth = ws.body_map['earth']
+    const sunDir = new THREE.Vector3().subVectors(sun.pos, earth.pos).normalize()
+    const invQ = earth.mesh.quaternion.clone().invert()
+    const sunBody = sunDir.clone().applyQuaternion(invQ)
+    const lon = Math.atan2(-sunBody.z, sunBody.x) * 180 / Math.PI
+    const lat = Math.asin(Math.max(-1, Math.min(1, sunBody.y))) * 180 / Math.PI
+    const now = new Date()
+    const utcH = now.getUTCHours() + now.getUTCMinutes() / 60
+    const expected = (12 - utcH) * 15
+    console.log(`[Earth] UTC: ${now.toISOString()} | sub-solar: lon=${lon.toFixed(1)}° lat=${lat.toFixed(1)}° | expected lon: ${expected.toFixed(1)}°`)
+}
+
 teleportTo('earth')
 const minimap = new Minimap(camera)
 animate()
@@ -115,8 +129,10 @@ function onWindowResize(): void {
 function teleportTo(bodyName: string): void {
     const body = ws.body_map[bodyName]
     if (!body) return
-    camera.position.copy(body.pos)
-    camera.position.x += 4 * body.radius
+    // Place camera along the Sun→body line, looking at the body from the Sun's side
+    const sun = ws.body_map['sun']
+    const dirFromSun = new THREE.Vector3().subVectors(body.pos, sun.pos).normalize()
+    camera.position.copy(body.pos).addScaledVector(dirFromSun, -4 * body.radius)
     cameraTarget.copy(body.pos)
     orbitControls.update()
 }

@@ -20,6 +20,14 @@ export interface BodyAtmosphere {
     tex_color: string
 }
 
+export interface BodyRotation {
+    period: number          // Sidereal rotation period in hours (negative = retrograde)
+    northPoleRA: number     // Right ascension of north pole (degrees, J2000)
+    northPoleDec: number    // Declination of north pole (degrees, J2000)
+    W0: number              // Prime meridian angle at J2000 epoch (degrees, IAU)
+    tidallyLocked?: string  // Name of parent body if tidally locked
+}
+
 export interface BodyData {
     name: string
     mass: number
@@ -30,6 +38,7 @@ export interface BodyData {
     visuals?: BodyVisuals
     rings?: BodyRings
     atmosphere?: BodyAtmosphere
+    rotation?: BodyRotation
 }
 
 /**
@@ -78,6 +87,7 @@ export const SolarSystemDB: Record<string, BodyData> = {
         radius: 696342,
         std_grav_param: StdGravParams.Sun,
         type: 'star',
+        rotation: { period: 609.12, northPoleRA: 286.13, northPoleDec: 63.87, W0: 84.176 },
         ephemeris: {
             /**
              * Coordinate Origin: Solar System Barycenter (SSB)
@@ -99,6 +109,7 @@ export const SolarSystemDB: Record<string, BodyData> = {
         radius: 2439.7,
         std_grav_param: StdGravParams.Mercury,
         type: 'planet (terrestrial)',
+        rotation: { period: 1407.6, northPoleRA: 281.01, northPoleDec: 61.45, W0: 329.5988 },
         ephemeris: {
             x: -5.294050804281836E+07,
             y: -3.775098987047710E+07,
@@ -108,8 +119,8 @@ export const SolarSystemDB: Record<string, BodyData> = {
             vz: -4.761898618226503E+00,
         },
         visuals: {
-            tex_color: '/textures/mercury/2k_mercury.jpg',
-            tex_bump: '/textures/mercury/2k_mercury_bump.jpg',
+            tex_color: 'textures/mercury/2k_mercury.jpg',
+            tex_bump: 'textures/mercury/2k_mercury_bump.jpg',
         },
     },
 
@@ -119,6 +130,7 @@ export const SolarSystemDB: Record<string, BodyData> = {
         radius: 6051.8,
         std_grav_param: StdGravParams.Venus,
         type: 'planet (terrestrial)',
+        rotation: { period: -5832.6, northPoleRA: 272.76, northPoleDec: 67.16, W0: 160.20 },
         ephemeris: {
             x: -7.622496178100505E+07,
             y: 7.680118021439891E+07,
@@ -128,8 +140,8 @@ export const SolarSystemDB: Record<string, BodyData> = {
             vz: 1.089432846551251E+00
         },
         visuals: {
-            tex_color: '/textures/venus/2k_venus_surface.jpg',
-            tex_bump: '/textures/venus/2k_venus_surface_bump.jpg',
+            tex_color: 'textures/venus/2k_venus_surface.jpg',
+            tex_bump: 'textures/venus/2k_venus_surface_bump.jpg',
         },
     },
 
@@ -139,6 +151,7 @@ export const SolarSystemDB: Record<string, BodyData> = {
         radius: 6371,
         std_grav_param: StdGravParams.Earth,
         type: 'planet (terrestrial)',
+        rotation: { period: 23.9345, northPoleRA: 0.0, northPoleDec: 90.0, W0: 190.147 },
         ephemeris: {
             /**
              * Coordinate Origin: Solar System Barycenter (SSB)
@@ -158,12 +171,12 @@ export const SolarSystemDB: Record<string, BodyData> = {
              *  - https://www.solarsystemscope.com/textures/
              *  - http://www.shadedrelief.com/natural3/index.html
              */
-            tex_color: '/textures/earth/no-clouds-or-arctic-ocean-ice.jpg',
-            tex_bump: '/textures/earth/terrestrial-elevation.jpg',
-            tex_spec: '/textures/earth/land-water-mask.jpg',
+            tex_color: 'textures/earth/no-clouds-or-arctic-ocean-ice.jpg',
+            tex_bump: 'textures/earth/terrestrial-elevation.jpg',
+            tex_spec: 'textures/earth/land-water-mask.jpg',
         },
         atmosphere: {
-            tex_color: '/textures/earth/clouds-fair-weather.jpg',
+            tex_color: 'textures/earth/clouds-fair-weather.jpg',
         }
     },
 
@@ -173,6 +186,7 @@ export const SolarSystemDB: Record<string, BodyData> = {
         radius: 1737.1,
         std_grav_param: StdGravParams.Moon,
         type: 'moon of Earth',
+        rotation: { period: 655.73, northPoleRA: 270.0, northPoleDec: 66.54, W0: 38.3213, tidallyLocked: 'Earth' },
         ephemeris: {
             /**
              * Coordinate Origin: Solar System Barycenter (SSB)
@@ -187,8 +201,8 @@ export const SolarSystemDB: Record<string, BodyData> = {
             vz: 4.459035856485372E-02,
         },
         visuals: {
-            tex_color: '/textures/moon/moonmap.jpg',
-            tex_bump: '/textures/moon/moonbump.jpg',
+            tex_color: 'textures/moon/moonmap.jpg',
+            tex_bump: 'textures/moon/moonbump.jpg',
         },
     },
 
@@ -198,6 +212,7 @@ export const SolarSystemDB: Record<string, BodyData> = {
         radius: 3389.5,
         std_grav_param: StdGravParams.Mars,
         type: 'planet (terrestrial)',
+        rotation: { period: 24.6229, northPoleRA: 317.68, northPoleDec: 52.89, W0: 176.049 },
         ephemeris: {
             x: 1.668276381641096E+08,
             y: 1.396078666200140E+08,
@@ -207,8 +222,8 @@ export const SolarSystemDB: Record<string, BodyData> = {
             vz: 7.914286108327682E-01,
         },
         visuals: {
-            tex_color: '/textures/mars/2k_mars.jpg',
-            tex_bump: '/textures/mars/2k_mars_bump.jpg',
+            tex_color: 'textures/mars/2k_mars.jpg',
+            tex_bump: 'textures/mars/2k_mars_bump.jpg',
         },
     },
 
@@ -218,6 +233,7 @@ export const SolarSystemDB: Record<string, BodyData> = {
         radius: 69911,
         std_grav_param: StdGravParams.Jupiter,
         type: 'planet (gas giant); has rings',
+        rotation: { period: 9.925, northPoleRA: 268.05, northPoleDec: 64.49, W0: 284.95 },
         ephemeris: {
             x: -3.224598868428773E+08,
             y: -7.315098672618929E+08,
@@ -227,7 +243,7 @@ export const SolarSystemDB: Record<string, BodyData> = {
             vz: -2.447243767022833E-01,
         },
         visuals: {
-            tex_color: '/textures/jupiter/2k_jupiter.jpg',
+            tex_color: 'textures/jupiter/2k_jupiter.jpg',
         },
     },
 
@@ -237,6 +253,7 @@ export const SolarSystemDB: Record<string, BodyData> = {
         radius: 58232,
         std_grav_param: StdGravParams.Saturn,
         type: 'planet (gas giant); has rings',
+        rotation: { period: 10.656, northPoleRA: 40.60, northPoleDec: 83.54, W0: 38.90 },
         ephemeris: {
             x: 2.907175167445949E+08,
             y: -1.475467667745180E+09,
@@ -246,12 +263,12 @@ export const SolarSystemDB: Record<string, BodyData> = {
             vz: -3.885338975003587E-01,
         },
         visuals: {
-            tex_color: '/textures/saturn/2k_saturn.jpg',
+            tex_color: 'textures/saturn/2k_saturn.jpg',
         },
         rings: {
             near: 74658,
             far: 136775,
-            tex_color: '/textures/saturn/2k_saturn_ring_alpha.png',
+            tex_color: 'textures/saturn/2k_saturn_ring_alpha.png',
         },
     },
 
@@ -261,6 +278,7 @@ export const SolarSystemDB: Record<string, BodyData> = {
         radius: 25362,
         std_grav_param: StdGravParams.Uranus,
         type: 'planet (ice giant); has rings',
+        rotation: { period: -17.24, northPoleRA: 257.31, northPoleDec: -15.18, W0: 203.81 },
         ephemeris: {
             x: 2.546377528357834E+09,
             y: 1.532027426064579E+09,
@@ -270,7 +288,7 @@ export const SolarSystemDB: Record<string, BodyData> = {
             vz: 6.680442269750042E-02,
         },
         visuals: {
-            tex_color: '/textures/uranus/2k_uranus.jpg',
+            tex_color: 'textures/uranus/2k_uranus.jpg',
         },
     },
 
@@ -280,6 +298,7 @@ export const SolarSystemDB: Record<string, BodyData> = {
         radius: 24622,
         std_grav_param: StdGravParams.Neptune,
         type: 'planet (ice giant); has rings',
+        rotation: { period: 16.11, northPoleRA: 299.36, northPoleDec: 43.46, W0: 253.18 },
         ephemeris: {
             x: 4.335247964748558E+09,
             y: -1.120545299150495E+09,
@@ -289,7 +308,7 @@ export const SolarSystemDB: Record<string, BodyData> = {
             vz: -1.388478893539726E-01,
         },
         visuals: {
-            tex_color: '/textures/neptune/2k_neptune.jpg',
+            tex_color: 'textures/neptune/2k_neptune.jpg',
         },
     },
 
@@ -299,6 +318,7 @@ export const SolarSystemDB: Record<string, BodyData> = {
         radius: 1186,
         std_grav_param: StdGravParams.Pluto,
         type: 'dwarf planet',
+        rotation: { period: -153.29, northPoleRA: 132.99, northPoleDec: -6.16, W0: 302.695 },
         ephemeris: {
             x: 1.776130355374673E+09,
             y: -4.718638666649714E+09,
