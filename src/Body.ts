@@ -15,7 +15,8 @@ class Body {
     radius: number
     mesh: THREE.Mesh
     atmosphere?: THREE.Mesh<THREE.SphereGeometry, THREE.MeshPhongMaterial>
-    rings?: THREE.Mesh<THREE.RingGeometry, THREE.MeshPhongMaterial>
+    rings?: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>
+    ringShadowUniforms?: { sunDir: { value: THREE.Vector3 }; planetRadius: { value: number } }
     corona?: THREE.Mesh
     light?: THREE.PointLight
     acc: THREE.Vector3
@@ -170,9 +171,66 @@ class Body {
             const thetaSegments = 100
             const phiSegments = 1
 
+            const ringMaterial = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true })
+
+            // Planet shadow on the rings: darken fragments inside the planet's
+            // cylindrical shadow (the planet blocks sunlight from reaching them).
+            // We work in the ring mesh's local space — the planet center is at
+            // the origin, the ring lies in the XZ plane (after rotateX below),
+            // and sunDir is passed each frame as a uniform.
+            // sunAngularRadius: the Sun's angular radius as seen from this planet,
+            // expressed in local-space units at distance 1 along sunDir.
+            // This determines the penumbra width for a soft shadow edge.
+            const ringShadowUniforms = {
+                sunDir: { value: new THREE.Vector3(1, 0, 0) },
+                planetRadius: { value: 1.0 },  // planet sphere has radius 1 in local space
+                sunAngularRadius: { value: 0.01 },  // updated each frame
+            }
+            ringMaterial.onBeforeCompile = (shader) => {
+                shader.uniforms.sunDir = ringShadowUniforms.sunDir
+                shader.uniforms.planetRadius = ringShadowUniforms.planetRadius
+                shader.uniforms.sunAngularRadius = ringShadowUniforms.sunAngularRadius
+                shader.vertexShader = shader.vertexShader.replace(
+                    '#include <common>',
+                    '#include <common>\nvarying vec3 vLocalPos;'
+                )
+                shader.vertexShader = shader.vertexShader.replace(
+                    '#include <begin_vertex>',
+                    '#include <begin_vertex>\nvLocalPos = position;'
+                )
+                shader.fragmentShader = shader.fragmentShader.replace(
+                    '#include <common>',
+                    `#include <common>
+                    uniform vec3 sunDir;
+                    uniform float planetRadius;
+                    uniform float sunAngularRadius;
+                    varying vec3 vLocalPos;`
+                )
+                // Soft shadow with penumbra from the Sun's finite angular size.
+                // The umbra edge is where the planet just fully covers the Sun,
+                // the penumbra edge is where the planet first starts to occlude.
+                shader.fragmentShader = shader.fragmentShader.replace(
+                    '#include <premultiplied_alpha_fragment>',
+                    `float alongSun = dot(vLocalPos, sunDir);
+                    if (alongSun < 0.0) {
+                        vec3 toAxis = vLocalPos - alongSun * sunDir;
+                        float dist = length(toAxis);
+                        // At distance |alongSun| behind the planet, the Sun's disc
+                        // has apparent radius sunAngularRadius * |alongSun| in local units.
+                        float sunR = sunAngularRadius * abs(alongSun);
+                        float umbraEdge = planetRadius - sunR;   // fully shadowed inside
+                        float penumbraEdge = planetRadius + sunR; // fully lit outside
+                        float shadow = smoothstep(umbraEdge, penumbraEdge, dist);
+                        gl_FragColor.rgb *= mix(0.05, 1.0, shadow);
+                    }
+                    #include <premultiplied_alpha_fragment>`
+                )
+            }
+            this.ringShadowUniforms = ringShadowUniforms
+
             this.rings = new THREE.Mesh(
                 new THREE.RingGeometry(innerRadius, outerRadius, thetaSegments, phiSegments),
-                new THREE.MeshPhongMaterial({ side: THREE.DoubleSide, transparent: true }))
+                ringMaterial)
 
             // Ring lies in XY plane; rotate so its normal aligns with local +Y (pole)
             this.rings.rotateX(Math.PI / 2)
@@ -187,7 +245,7 @@ class Body {
             this.rings.geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
 
             const tex_color = ws.textureLoader.load(data.rings.tex_color)
-            this.rings.material.map = tex_color
+            ringMaterial.map = tex_color
 
             // Parent rings to the mesh so they inherit tilt
             this.mesh.add(this.rings)
@@ -272,6 +330,29 @@ class Body {
         if (this.mesh.visible && (this.mesh.material as THREE.ShaderMaterial).isShaderMaterial) {
             const sunMat = this.mesh.material as THREE.ShaderMaterial
             sunMat.uniforms.uTime.value = performance.now() * 0.001
+        }
+
+        if (this.ringShadowUniforms) {
+            // Sun direction in the planet mesh's local space.
+            // The ring child has rotateX(PI/2) so ring geometry XY maps to
+            // mesh local XZ — but the shader reads `position` which is the
+            // ring geometry's own coordinates (XY plane, before rotateX).
+            // We therefore need sunDir in the ring's local frame:
+            //   world → mesh local (undo mesh quaternion) → ring local (undo rotateX)
+            const sunWorld = this.pos.clone().negate().normalize()  // Sun ≈ origin
+            const invMeshQuat = this.mesh.quaternion.clone().invert()
+            const sunMeshLocal = sunWorld.applyQuaternion(invMeshQuat)
+            // Undo the ring's rotateX(PI/2): rotate by -PI/2 around X
+            // This maps (x, y, z) → (x, z, -y)
+            this.ringShadowUniforms.sunDir.value.set(sunMeshLocal.x, sunMeshLocal.z, -sunMeshLocal.y)
+
+            // Sun's angular radius (radians) as seen from this planet.
+            // In local space the this.radius factor cancels: both the Sun's
+            // projected size and fragment distances scale the same way.
+            const SUN_RADIUS_KM = 696342
+            const sunRadiusAU = Utils.km_to_astronomical_units(SUN_RADIUS_KM)
+            const distAU = this.pos.length()
+            this.ringShadowUniforms.sunAngularRadius.value = sunRadiusAU / distAU
         }
 
         if (this.light)
