@@ -6,7 +6,7 @@ export type CameraMode = 'observer' | 'chase' | 'cockpit'
 
 // Chase cam offset in AU — behind (+Z) and above (+Y) the ship (ship faces -Z)
 const CHASE_OFFSET = new THREE.Vector3(0, 1.5e-5, 4e-5)
-const CHASE_LERP_RATE = 16 // per second — snappy tracking
+const CHASE_LERP_RATE = 60 // per second — very snappy, near-instant tracking
 
 const _targetPos = new THREE.Vector3()
 const _offset = new THREE.Vector3()
