@@ -68,22 +68,6 @@ export class CockpitHud {
         })
         this.el.appendChild(this.speedEl)
 
-        // Mode indicator — top center
-        const modeLabel = document.createElement('div')
-        Object.assign(modeLabel.style, {
-            position: 'absolute',
-            top: '24px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            fontFamily: "'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace",
-            fontSize: '9px',
-            letterSpacing: '2px',
-            textTransform: 'uppercase',
-            color: 'rgba(120, 180, 255, 0.4)',
-        })
-        modeLabel.textContent = 'cockpit'
-        this.el.appendChild(modeLabel)
-
         document.body.appendChild(this.el)
     }
 

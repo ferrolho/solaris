@@ -18,7 +18,7 @@ export class SettingsPanel {
         const btn = document.createElement('button')
         Object.assign(btn.style, {
             position: 'fixed',
-            top: '12px',
+            bottom: '12px',
             right: '12px',
             width: '34px',
             height: '34px',
@@ -43,7 +43,7 @@ export class SettingsPanel {
         this.panel = document.createElement('div')
         Object.assign(this.panel.style, {
             position: 'fixed',
-            top: '52px',
+            bottom: '52px',
             right: '12px',
             width: '220px',
             padding: '12px 14px',
