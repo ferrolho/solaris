@@ -1,0 +1,16 @@
+{
+  "name": "solaris-server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "npx tsx src/index.ts"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.14",
+    "tsx": "^4.19.0",
+    "typescript": "^6.0.2"
+  }
+}
