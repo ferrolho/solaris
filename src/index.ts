@@ -44,19 +44,8 @@ orbitControls.zoomSpeed = 0.8
 // Camera position is set after initSolarSystem() to start near Earth
 
 const skybox_tex = ws.textureLoader.load('textures/stars_milky_way.jpg')
-
-const skybox = new THREE.Mesh(
-    new THREE.SphereGeometry(1e9),
-    new THREE.MeshPhongMaterial({
-        color: 'black',
-        emissive: 'white',
-        specular: 'black',
-        map: skybox_tex,
-        emissiveMap: skybox_tex,
-        side: THREE.BackSide,
-    }))
-
-ws.scene.add(skybox)
+skybox_tex.mapping = THREE.EquirectangularReflectionMapping
+ws.scene.background = skybox_tex
 
 /* - - - - - - - - - - - - - - - - */
 
