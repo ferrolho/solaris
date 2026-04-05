@@ -4,10 +4,11 @@ import type { CameraController, CameraMode } from './CameraController'
 const AU_KM = 149597870.691
 
 /**
- * Cockpit overlay — crosshair and speed readout shown only in cockpit mode.
+ * Ship HUD overlay — crosshair (cockpit only) and speed readout (cockpit + chase).
  */
 export class CockpitHud {
     private el: HTMLDivElement
+    private crosshairEl: HTMLDivElement
     private speedEl: HTMLDivElement
     private ship: Ship
     private cameraCtrl: CameraController
@@ -26,8 +27,9 @@ export class CockpitHud {
             display: 'none',
         })
 
-        // Crosshair
-        const crosshair = document.createElement('div')
+        // Crosshair (cockpit only)
+        this.crosshairEl = document.createElement('div')
+        const crosshair = this.crosshairEl
         Object.assign(crosshair.style, {
             position: 'absolute',
             top: '50%',
@@ -72,9 +74,12 @@ export class CockpitHud {
     }
 
     update(): void {
-        const show = this.cameraCtrl.mode === 'cockpit'
+        const mode = this.cameraCtrl.mode
+        const show = mode === 'cockpit' || mode === 'chase'
         this.el.style.display = show ? 'block' : 'none'
         if (!show) return
+
+        this.crosshairEl.style.display = mode === 'cockpit' ? 'block' : 'none'
 
         const speed = this.ship.velocity.length() // AU/s
         const speedKms = speed * AU_KM // km/s
