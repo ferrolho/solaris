@@ -37,7 +37,7 @@ Planet positions are computed client-side for the current date using Keplerian o
 
 - [x] Sun shader — unified billboard rendering photosphere (turbulence, sunspots, limb darkening) and corona glow in a single shader with seamless transition
 - [ ] Time controls — simulation clock with adjustable time scale (e.g. 1M× to see orbits), recomputing positions via `computeEphemerisForDate()` each frame (<1ms, fits easily in the 16ms frame budget at 60 FPS). Date picker UI to jump to any date. This replaces the broken N-body physics loop — analytical Keplerian positions are more accurate and cheaper than forward simulation.
-- [ ] Minimap — schematic top-down orthographic view in a corner, with exaggerated planet sizes, orbital rings, and a camera position indicator ("you are here"). Rendered via a second viewport/camera pass.
+- [x] Minimap — schematic top-down orthographic view in a corner, with exaggerated planet sizes, orbital rings, and a camera position indicator ("you are here"). Rendered as a 2D canvas overlay.
 - [ ] Orbital trails — draw each planet's orbital path as a faint ellipse
 - [ ] Planet labels / HUD — show planet names, distances, and current date on screen
 - [x] Axial tilt and rotation — planets spin on correct axes with IAU rotation data, GMST-based Earth orientation, and UV handedness correction for accurate illumination

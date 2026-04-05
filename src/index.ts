@@ -7,6 +7,9 @@ import { SolarSystemDB } from './SIConstants'
 import { computeEphemerisForDate } from './Ephemeris'
 import { Hud } from './Hud'
 import { Minimap } from './Minimap'
+import { Ship } from './Ship'
+import { InputManager } from './InputManager'
+import { CameraController } from './CameraController'
 import * as ws from './Workspace'
 
 // WebGL check
@@ -73,6 +76,10 @@ initSolarSystem()
     console.log(`[Earth] UTC: ${now.toISOString()} | sub-solar: lon=${lon.toFixed(1)}° lat=${lat.toFixed(1)}° | expected lon: ${expected.toFixed(1)}°`)
 }
 
+const inputManager = new InputManager()
+const ship = new Ship(ws.scene, ws.body_map['earth'])
+const cameraCtrl = new CameraController(camera, orbitControls, ship)
+
 teleportTo('earth')
 const hud = new Hud(camera)
 const minimap = new Minimap(camera)
@@ -103,6 +110,11 @@ function animate(): void {
 
     pollGamepad()
     updateWorld()
+
+    if (cameraCtrl.mode !== 'observer') {
+        ship.update(ws.delta, inputManager.keysDown)
+    }
+    cameraCtrl.update(ws.delta)
 
     renderer.render(ws.scene, camera)
     hud.update()
@@ -136,17 +148,21 @@ function teleportTo(bodyName: string): void {
 
 window.addEventListener('keydown', function (event: KeyboardEvent) {
     switch (event.key) {
-        case '0': teleportTo('sun'); break
-        case '1': teleportTo('mercury'); break
-        case '2': teleportTo('venus'); break
-        case '3': teleportTo('earth'); break
-        case '4': teleportTo('mars'); break
-        case '5': teleportTo('jupiter'); break
-        case '6': teleportTo('saturn'); break
-        case '7': teleportTo('uranus'); break
-        case '8': teleportTo('neptune'); break
-        case '9': teleportTo('pluto'); break
-        case 'd': case 'D': updateWorld(); break
+        case 'Tab':
+            event.preventDefault()
+            cameraCtrl.cycleMode()
+            break
+        // Teleport keys only in observer mode
+        case '0': if (cameraCtrl.mode === 'observer') teleportTo('sun'); break
+        case '1': if (cameraCtrl.mode === 'observer') teleportTo('mercury'); break
+        case '2': if (cameraCtrl.mode === 'observer') teleportTo('venus'); break
+        case '3': if (cameraCtrl.mode === 'observer') teleportTo('earth'); break
+        case '4': if (cameraCtrl.mode === 'observer') teleportTo('mars'); break
+        case '5': if (cameraCtrl.mode === 'observer') teleportTo('jupiter'); break
+        case '6': if (cameraCtrl.mode === 'observer') teleportTo('saturn'); break
+        case '7': if (cameraCtrl.mode === 'observer') teleportTo('uranus'); break
+        case '8': if (cameraCtrl.mode === 'observer') teleportTo('neptune'); break
+        case '9': if (cameraCtrl.mode === 'observer') teleportTo('pluto'); break
     }
 })
 
